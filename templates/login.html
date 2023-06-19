@@ -1,0 +1,23 @@
+{% extends "base_layout.html" %}
+
+{% block head %}
+<script src="{{ url_for('static', path='jquery-3.7.0.min.js') }}"></script>
+<script src="{{ url_for('static', path='auth_lib.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+<main class="container" id="auth">
+    <article>
+        <form class="auth-form" id="login-form" autocomplete="on">
+            <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="Calendar">
+            <h1>Willkommen zurück</h1>
+            <label for="username">Benutzername</label>
+            <input type="text" id="username" autocomplete="on" required>
+            <label for="password">Passwort</label>
+            <input type="password" id="password" autocomplete="on" required>
+            <button type="submit" id="submit">Anmelden</button>
+            <a href="/signup">Registrierung</a>
+        </form>
+    </article>
+</main>
+{% endblock %}

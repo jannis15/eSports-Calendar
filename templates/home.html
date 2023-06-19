@@ -1,0 +1,169 @@
+{% extends "calendar_layout.html" %}
+
+
+{% block head %}
+    <script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/index.global.min.js') }}"></script>
+    <script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/locales/de.js') }}"></script>
+    <script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
+    {% endblock %}
+    
+    {% block body %}
+    <main class="container">
+        <div id="calendar"></div>
+    </main>
+    
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+            locale: 'de',
+            allDayMaintainDuration: true,
+            initialView: 'resourceTimelineDay',
+            nowIndicator: true,
+            contentHeight: "auto",
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                end: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
+            },
+            navLinks: false, // can click day/week names to navigate views
+            editable: true,
+            selectable: true,
+            selectMirror: true,
+            eventColor: '#81212b',
+            resourceAreaHeaderContent: 'Teams',
+            dayMaxEvents: false, // allow "more" link when too many events
+            resourceLabelContent: function(arg) {
+                let iconUrl = '';
+                if (arg.resource.id.startsWith('team')) {
+                    iconUrl = "{{ url_for('static', path='img/users-16-2.svg') }}";
+                } else {
+                    iconUrl = "{{ url_for('static', path='img/user-16-2.svg') }}";
+                }
+                return { html: '<img src="'+iconUrl+'" style="margin-left: .5em; margin-right: .5em">' + arg.resource.title };
+            },
+            select: (info) => {
+                console.log(info);
+                // create a new event object
+                let eventData = {
+                    id: '',
+                    title: 'Termin',
+                    start: info.startStr,
+                    resourceId: info.resource._resource.id,
+                    end: info.endStr,
+                    resizable: true,
+                    extendedProps: currentEventPriority,
+                    color: currentEventPriorityColor,
+                    textColor: getContrastColor(currentEventPriorityColor),
+                };
+
+                // render the event on the calendar
+                calendar.addEvent(eventData);
+                calendar.unselect();
+            },
+            eventClick: (info) => {
+            },
+        });
+
+        calendar.addResource({
+          id: 'team eSports',
+          title: 'Kronic eSports'
+        });
+
+        calendar.addResource({
+          id: 'team Valiant',
+          title: 'Kronic Valiant'
+        });
+
+        calendar.addResource({
+          id: 'team Ally Owngoaling',
+          title: 'Kronic Ally Owngoaling'
+        });
+
+        calendar.addResource({
+          id: 'team Black',
+          title: 'Kronic Black'
+        });
+
+        calendar.addResource({
+            parentId: 'team eSports',
+            title: 'Timo'
+        });
+
+        calendar.addResource({
+            parentId: 'team eSports',
+            title: 'Jannis'
+        });
+
+        calendar.addResource({
+            parentId: 'team eSports',
+            title: 'Mardi'
+        });
+
+        calendar.addResource({
+            parentId: 'team eSports',
+            title: 'Marvin'
+        });
+
+        calendar.addResource({
+            parentId: 'team Valiant',
+            title: ''
+        });
+
+        calendar.addResource({
+            parentId: 'team Black',
+            title: ''
+        });
+
+        calendar.addResource({
+            parentId: 'team Ally Owngoaling',
+            title: ''
+        });
+
+
+        calendar.render();
+    });
+
+
+  // declarations
+  const controlsEl = document.createElement('div');
+  controlsEl.classList.add('event-priority-container', 'grid');
+
+  let currentButton = null;
+  let currentEventPriority = ''; 
+  let currentEventPriorityColor = '';
+
+  const buttons = [
+    {
+      className: EventPriority.Standard,
+      text: 'Standard',
+      click: () => { handleEventPriorityButtonClick(EventPriority.Standard); },
+      iconUrl: "{{ url_for('static', path='img/standard-24-2.svg') }}",
+    },
+    {
+      className: EventPriority.NoTime,
+      text: 'Keine Zeit',
+      click: () => { handleEventPriorityButtonClick(EventPriority.NoTime); },
+      iconUrl: "{{ url_for('static', path='img/notime-24-2.svg') }}",
+    },
+    {
+      className: EventPriority.Uncertain,
+      text: 'Unsicher',
+      click: () => { handleEventPriorityButtonClick(EventPriority.Uncertain); },
+      iconUrl: "{{ url_for('static', path='img/uncertain-24-2.svg') }}",
+    },
+    {
+      className: EventPriority.Certain,
+      text: 'Sicher',
+      click: () => { handleEventPriorityButtonClick(EventPriority.Certain); }, 
+      iconUrl: "{{ url_for('static', path='img/certain-24-2.svg') }}",
+    },
+  ];
+
+  document.addEventListener('DOMContentLoaded', () => { calendarInit(); });
+</script>
+
+{% endblock %}
