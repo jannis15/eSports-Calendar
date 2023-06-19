@@ -12,11 +12,14 @@ class RegistrationCredentials(BaseModel):
     password: str
 
 
-class EventPrioritySchema(BaseModel):
-    id: str
-    name: str
-    detail: str
-    color: str
+# class EventPrioritySchema(BaseModel):
+#     id: str
+#     name: str
+#     detail: str
+#     color: str
+#
+#
+# class EventPrioritySchemaList(List[EventPrioritySchema]):
+#     pass
 
-class EventPrioritySchemaList(List[EventPrioritySchema]):
-    pass
+

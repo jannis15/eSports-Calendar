@@ -11,8 +11,8 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     events = relationship("UserEvent", back_populates="user")
-    # orgs = relationship("UserOrg", back_populates="user")
-    # teams = relationship("UserTeam", back_populates="user")
+    orgs = relationship("UserOrg", back_populates="user")
+    teams = relationship("UserTeam", back_populates="user")
 
 
 class Session(Base):
@@ -54,25 +54,46 @@ class UserEvent(Base):
     user = relationship("User", back_populates="events")
     event = relationship("Event", back_populates="users")
 
-# extra
+
+class Org(Base):
+    __tablename__ = "Org"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    creator_id = Column(String, ForeignKey("User.id"), nullable=False)
+    creator_time = Column(DateTime, nullable=False)
+    users = relationship("UserOrg", back_populates="org")
 
 
-# class Org(Base):
-#     __tablename__ = "Org"
+class Team(Base):
+    __tablename__ = "Team"
+
+    id = Column(String, primary_key=True, index=True)
+    org_id = Column(String, ForeignKey("Org.id"), nullable=False)
+    name = Column(String, nullable=False)
+    creator_id = Column(String, ForeignKey("User.id"), nullable=False)
+    creator_time = Column(DateTime, nullable=False)
+    users = relationship("UserTeam", back_populates="team")
+    # events = relationship("TeamEvent", back_populates="team")
+
+
+class UserTeam(Base):
+    __tablename__ = "UserTeam"
+
+    user_id = Column(String, ForeignKey("User.id"), primary_key=True)
+    team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
+    user = relationship("User", back_populates="teams")
+    team = relationship("Team", back_populates="users")
+
+
+class UserOrg(Base):
+    __tablename__ = "UserOrg"
+
+    user_id = Column(String, ForeignKey("User.id"), primary_key=True)
+    org_id = Column(String, ForeignKey("Org.id"), primary_key=True)
+    user = relationship("User", back_populates="orgs")
+    org = relationship("Org", back_populates="users")
 #
-#     id = Column(String, primary_key=True, index=True)
-#     name = Column(String, nullable=False)
-#     users = relationship("UserOrg", back_populates="org")
-#
-#
-# class Team(Base):
-#     __tablename__ = "Team"
-#
-#     id = Column(String, primary_key=True, index=True)
-#     org_id = Column(String, ForeignKey("Org.id"), nullable=False)
-#     name = Column(String, nullable=False)
-#     events = relationship("TeamEvent", back_populates="team")
-#     users = relationship("UserEvent", back_populates="event")
 #
 #
 # class TeamEvent(Base):
@@ -85,19 +106,5 @@ class UserEvent(Base):
 #     event = relationship("Event", back_populates="teams")
 #
 #
-# class UserOrg(Base):
-#     __tablename__ = "UserOrg"
-#
-#     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
-#     org_id = Column(String, ForeignKey("Org.id"), primary_key=True)
-#     user = relationship("User", back_populates="orgs")
-#     org = relationship("Org", back_populates="users")
 #
 #
-# class UserTeam(Base):
-#     __tablename__ = "UserTeam"
-#
-#     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
-#     team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
-#     user = relationship("User", back_populates="teams")
-#     team = relationship("Team", back_populates="users")

@@ -36,7 +36,7 @@ async def exc_handle(request: Request, exc: HTTPException):
 @app.get("/")
 @app.get('/home')
 async def get_home(request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
-    user_id = db_handler.verify_user(db, token)
+    user_id = db_handler.verify_user_session(db, token)
     return templates.TemplateResponse("home.html", {
         "request": request,
         "user_id": user_id,
