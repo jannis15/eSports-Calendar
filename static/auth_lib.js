@@ -9,7 +9,7 @@ $(document).ready(() => {
         submitBtn.removeAttribute("aria-busy");
     }
 
-    $("#login-form").submit(() => {
+    $("#login-form").submit((event) => {
         event.preventDefault();
 
         // declaration
@@ -52,7 +52,31 @@ $(document).ready(() => {
         });
     });
 
-$("#signup-form").submit(() => {
+    $("#org-form").submit((event) => {
+        event.preventDefault();
+
+        // declaration
+        const orgNameEl = document.getElementById("org-name");
+        const orgName = orgNameEl.value;
+
+        // AJAX call with JQuery
+        $.ajax({
+            url: '/org-creation',
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            data: JSON.stringify({name: orgName}),
+            beforeSend: handleAjaxStart,
+            complete: handleAjaxComplete,
+            success: (response) => {
+                console.log('Success:', response);
+            },
+            error: (xhr) => {
+                console.log('Error:', xhr.responseText);
+            }
+        });
+    });    
+
+    $("#signup-form").submit((event) => {
         event.preventDefault();
 
         // declaration

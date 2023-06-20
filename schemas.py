@@ -12,6 +12,9 @@ class RegistrationCredentials(BaseModel):
     password: str
 
 
+class OrganizationCreateSchema(BaseModel):
+    name: str
+
 # class EventPrioritySchema(BaseModel):
 #     id: str
 #     name: str

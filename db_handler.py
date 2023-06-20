@@ -37,11 +37,26 @@ class DBHandler:
     def __is_creator(self, user_id: str, creator_id: str) -> bool:
         return user_id == creator_id
 
-    def __is_user_member_of_org(self, db: DBSession, user_id: str, org_id: str) -> bool:
+    def is_user_member_of_org(self, db: DBSession, user_id: str, org_id: str) -> bool:
         user_org = db.query(UserOrg).filter_by(user_id=user_id, org_id=org_id).first()
         return user_org is not None
 
-    def create_user(self, credentials: RegistrationCredentials, db: DBSession) -> bool:
+    def org_exists(self, db: DBSession, org_id: str) -> bool:
+        org = db.query(Org).filter_by(id=org_id).first()
+        return org is not None
+
+    def user_exists(self, db: DBSession, user_id: str) -> bool:
+        user = db.query(User).filter_by(id=user_id).first()
+        return user is not None
+
+    def get_username_by_id(self, user_id: str, db: DBSession) -> str:
+        user = db.query(User).filter_by(id=user_id).first()
+        if user:
+            return user.username
+        else:
+            raise HTTPException(status_code=404, detail='User not found.')
+
+    def create_user(self, credentials: RegistrationCredentials, db: DBSession) -> str:
         new_user = User(
             id=self.__get_unique_uuid(db, User),
             username=credentials.username,
@@ -50,29 +65,31 @@ class DBHandler:
         db.add(new_user)
         try:
             db.commit()
-            return True
+            return new_user.id
         except sqlalchemy.exc.IntegrityError:
             raise HTTPException(status_code=500, detail='User already exists in survey.')
 
-    def create_organization(self, user_id, organization_name: str, db: DBSession) -> bool:
+    def create_organization(self, user_id, organization_name: str, db: DBSession) -> str:
         current_time = datetime.now(timezone.utc)
 
         new_org = Org(
             id=self.__get_unique_uuid(db, Org),
             name=organization_name,
             creator_id=user_id,
-            creator_time=current_time,
+            create_time=current_time,
         )
         db.add(new_org)
 
         try:
             db.commit()
 
-            new_user_org = UserOrg(user_id=user_id, org_id=new_org.id)
+            new_user_org = UserOrg(user_id=user_id,
+                                   org_id=new_org.id,
+                                   entry_date_time=current_time)
             db.add(new_user_org)
             db.commit()
 
-            return True
+            return new_org.id
         except sqlalchemy.exc.IntegrityError:
             db.rollback()
             raise HTTPException(status_code=500, detail='Error creating organization.')
@@ -122,14 +139,14 @@ class DBHandler:
             raise HTTPException(status_code=500, detail='Failed to delete user from organization.')
 
     def create_team(self, user_id: str, org_id: str, db: DBSession) -> bool:
-        if self.__is_user_member_of_org(db, user_id, org_id):
+        if self.is_user_member_of_org(db, user_id, org_id):
             current_time = datetime.now(timezone.utc)
             new_team = Team(
                 id=self.__get_unique_uuid(db, Team),
                 org_id=org_id,
                 name="New Team",
                 creator_id=user_id,
-                creator_time=current_time,
+                create_time=current_time,
             )
             db.add(new_team)
 
@@ -170,11 +187,11 @@ class DBHandler:
         session_user_id = self.verify_user_session(db, token)
 
         # Check if the user is a member of the organization
-        if not self.__is_user_member_of_org(db, user_id, org_id):
+        if not self.is_user_member_of_org(db, user_id, org_id):
             raise HTTPException(status_code=403, detail='User is not a member of the organization.')
 
         # Check if the session user is a member of the organization and a creator of the team
-        if not self.__is_user_member_of_org(db, session_user_id, org_id):
+        if not self.is_user_member_of_org(db, session_user_id, org_id):
             raise HTTPException(status_code=403, detail='You are not a member of the organization.')
 
         team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
@@ -204,7 +221,7 @@ class DBHandler:
             raise HTTPException(status_code=404, detail='Team not found.')
 
         org_id = team.org_id
-        if not self.__is_user_member_of_org(db, session_user_id, org_id):
+        if not self.is_user_member_of_org(db, session_user_id, org_id):
             raise HTTPException(status_code=403, detail='User is not a member of the organization.')
 
         if not self.__is_creator(session_user_id, team.creator_id) and session_user_id != user_id:
@@ -230,13 +247,21 @@ class DBHandler:
         return self.add_user_to_team(token, team_id, org_id, session_user_id, db)
 
     def add_user_to_organization(self, db: DBSession, user_id: str, org_id: str) -> None:
-        if self.__is_user_member_of_org(db, user_id, org_id):
+        current_time = datetime.utcnow()
+        if self.is_user_member_of_org(db, user_id, org_id):
             raise HTTPException(status_code=409, detail='User is already a member of the organization.')
+
+        if not self.user_exists(db, user_id):
+            raise HTTPException(status_code=404, detail='User not found.')
+
+        if not self.org_exists(db, org_id):
+            raise HTTPException(status_code=404, detail='Organization not found.')
 
         try:
             new_user_org = UserOrg(
                 user_id=user_id,
-                org_id=org_id
+                org_id=org_id,
+                entry_date_time=current_time,
             )
             db.add(new_user_org)
             db.commit()

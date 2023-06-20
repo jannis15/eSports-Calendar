@@ -61,7 +61,7 @@ class Org(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     creator_id = Column(String, ForeignKey("User.id"), nullable=False)
-    creator_time = Column(DateTime, nullable=False)
+    create_time = Column(DateTime, nullable=False)
     users = relationship("UserOrg", back_populates="org")
 
 
@@ -72,7 +72,7 @@ class Team(Base):
     org_id = Column(String, ForeignKey("Org.id"), nullable=False)
     name = Column(String, nullable=False)
     creator_id = Column(String, ForeignKey("User.id"), nullable=False)
-    creator_time = Column(DateTime, nullable=False)
+    create_time = Column(DateTime, nullable=False)
     users = relationship("UserTeam", back_populates="team")
     # events = relationship("TeamEvent", back_populates="team")
 
@@ -91,6 +91,7 @@ class UserOrg(Base):
 
     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
     org_id = Column(String, ForeignKey("Org.id"), primary_key=True)
+    entry_date_time = Column(DateTime, nullable=False)
     user = relationship("User", back_populates="orgs")
     org = relationship("Org", back_populates="users")
 #
