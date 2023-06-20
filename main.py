@@ -19,6 +19,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.exception_handler(HTTPException)
+# todo: dont really redirect with next anymore. rethinking needed
 async def exc_handle(request: Request, exc: HTTPException):
     if (request.method == 'GET') and (exc.status_code == 403):
         current_url = request.url.path
@@ -41,11 +42,12 @@ async def exc_handle(request: Request, exc: HTTPException):
 #     })
 
 
-@app.get('{org_id}/')
-@app.get('{org_id}/home')
-async def get_detail_home(org_id: str, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+@app.get('/c')
+@app.get('/c/{org_id}')
+async def get_detail_home(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
-    db_handler.is_user_member_of_org(db, user_id, org_id)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
 
     return templates.TemplateResponse("calendar_detail.html", {
         "request": request,
