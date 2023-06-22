@@ -32,18 +32,19 @@ async def exc_handle(request: Request, exc: HTTPException):
         )
 
 
-# @app.get("/")
-# @app.get('/home')
-# async def get_home(request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
-#     user_id = db_handler.verify_user_session(db, token)
-#     return templates.TemplateResponse("calendar_detail.html", {
-#         "request": request,
-#         "user_id": user_id,
-#     })
+@app.get("/")
+@app.get('/home')
+async def get_home(request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    organizations = db_handler.get_user_organizations(db, user_id)
+    return templates.TemplateResponse("home.html", {
+        "request": request,
+        "user_id": user_id,
+        "organizations": organizations,
+    })
 
 
-@app.get('/c')
-@app.get('/c/{org_id}')
+@app.get('/{org_id}/calendar')
 async def get_detail_home(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
@@ -96,12 +97,12 @@ async def post_register(credentials: RegistrationCredentials, db: DBSession = De
     }
 
 
-@app.get("/org-creation")
+@app.get("/admin")
 async def get_org_creation(request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     username = db_handler.get_username_by_id(user_id, db)
     if username == 'admin':
-        return templates.TemplateResponse("org_creation.html", {"request": request})
+        return templates.TemplateResponse("admin.html", {"request": request})
     else:
         raise HTTPException(status_code=403, detail='Only the admin can access this route.')
 

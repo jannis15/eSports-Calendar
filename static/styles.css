@@ -225,3 +225,21 @@ main#auth {
   display: block;
   margin: .5em auto .5em auto;
 }
+
+/* Home */
+article.organization {
+  display: flex;
+  gap: 1em;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+article.organization img {
+  width: 10rem;
+  height: 10rem;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: .3rem .3rem .3rem #00000048;
+}

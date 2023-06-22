@@ -3,7 +3,7 @@ import sqlalchemy.exc
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import desc
 from db_session import SessionLocal
-from schemas import RegistrationCredentials
+from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema
 from db_models import User, Session, Org, UserOrg, Team, UserTeam
 import uuid
 from datetime import datetime, timezone
@@ -338,3 +338,20 @@ class DBHandler:
             return True
         else:
             return False
+
+    def get_user_organizations(self, db: DBSession, user_id: str) -> OrganizationsSchema:
+        db_user_orgs = db.query(UserOrg).filter(UserOrg.user_id == user_id).all()
+
+        organizations = []
+        for db_user_org in db_user_orgs:
+            org = db.query(Org).filter(Org.id == db_user_org.org_id).first()
+            if org:
+                organization = OrganizationSchema(
+                    org_id=org.id,
+                    name=org.name,
+                    creator_id=org.creator_id,
+                    create_datetime=org.create_time,
+                )
+                organizations.append(organization)
+
+        return OrganizationsSchema(organizations)

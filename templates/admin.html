@@ -6,13 +6,14 @@
 {% endblock %}
 
 {% block body %}
-<main class="container">
+<main class="container" id="auth">
     <article>
-        <form class="auth-form" id="org-form">
-            <h1>Organisation erstellen</h1>
-            <label for="org-name">Name</label>
+        <form class="auth-form" id="admin-form">
+            <img src="{{ url_for('static', path='img/settings-32-2.svg') }}" alt="Calendar">
+            <h1>Admin-Panel</h1>
+            <label for="org-name">Organisationsname</label>
             <input type="text" id="org-name" required>
-            <button type="submit" id="submit">Erstellen</button>
+            <button type="submit" id="submit">Organisation erstellen</button>
         </form>
     </article>
 </main>

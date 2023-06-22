@@ -1,7 +1,4 @@
-
 .idea/vcs.xml
-__pycache__/db_event_listener.cpython-311.pyc
-__pycache__/db_handler.cpython-311.pyc
-__pycache__/db_models.cpython-311.pyc
-__pycache__/schemas.cpython-311.pyc
 eSportsCalendar.db
+*.pyc
+

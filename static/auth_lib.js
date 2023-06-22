@@ -52,7 +52,7 @@ $(document).ready(() => {
         });
     });
 
-    $("#org-form").submit((event) => {
+    $("#admin-form").submit((event) => {
         event.preventDefault();
 
         // declaration
