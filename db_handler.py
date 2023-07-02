@@ -3,7 +3,8 @@ import sqlalchemy.exc
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import desc
 from db_session import SessionLocal
-from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema
+from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema, OrganizationDetailsSchema, \
+    MemberSchema, TeamSchema, TeamDetailsSchema
 from db_models import User, Session, Org, UserOrg, Team, UserTeam
 import uuid
 from datetime import datetime, timezone
@@ -49,6 +50,10 @@ class DBHandler:
         user = db.query(User).filter_by(id=user_id).first()
         return user is not None
 
+    def team_exists_in_org(self, db: DBSession, team_id, org_id: str) -> bool:
+        team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
+        return team is not None
+
     def get_username_by_id(self, user_id: str, db: DBSession) -> str:
         user = db.query(User).filter_by(id=user_id).first()
         if user:
@@ -76,7 +81,7 @@ class DBHandler:
             id=self.__get_unique_uuid(db, Org),
             name=organization_name,
             creator_id=user_id,
-            create_time=current_time,
+            create_datetime=current_time,
         )
         db.add(new_org)
 
@@ -138,15 +143,15 @@ class DBHandler:
             db.rollback()
             raise HTTPException(status_code=500, detail='Failed to delete user from organization.')
 
-    def create_team(self, user_id: str, org_id: str, db: DBSession) -> bool:
+    def create_team(self, user_id, team_name, org_id: str, db: DBSession) -> str:
         if self.is_user_member_of_org(db, user_id, org_id):
             current_time = datetime.now(timezone.utc)
             new_team = Team(
                 id=self.__get_unique_uuid(db, Team),
                 org_id=org_id,
-                name="New Team",
+                name=team_name,
                 creator_id=user_id,
-                create_time=current_time,
+                create_datetime=current_time,
             )
             db.add(new_team)
 
@@ -157,7 +162,7 @@ class DBHandler:
                 db.add(new_user_team)
                 db.commit()
 
-                return True
+                return new_team.id
             except sqlalchemy.exc.IntegrityError:
                 db.rollback()
                 raise HTTPException(status_code=500, detail='Error creating team.')
@@ -339,18 +344,65 @@ class DBHandler:
         else:
             return False
 
+    def get_organization_details(self, org_id: str, db: DBSession) -> OrganizationDetailsSchema:
+        if not self.org_exists(db, org_id):
+            raise HTTPException(status_code=404, detail='Organization not found.')
+
+        db_org = db.query(Org).filter(Org.id == org_id).first()
+
+        members = [
+            MemberSchema(user_id=user.user_id, username=user.user.username)
+            for user in db_org.users
+        ]
+
+        teams = [
+            TeamSchema(team_id=team.id,
+                       team_name=team.name,
+                       members=[MemberSchema(user_id=user.user_id, username=user.user.username)
+                                for user in team.users])
+            for team in db_org.teams
+        ]
+
+        return OrganizationDetailsSchema(
+            org_id=db_org.id,
+            org_name=db_org.name,
+            creator_id=db_org.creator_id,
+            creator_name=self.get_username_by_id(db_org.creator_id, db),
+            create_datetime=db_org.create_datetime,
+            members=members,
+            teams=teams,
+        )
+
+    def get_team_details(self, db: DBSession, org_id, team_id: str) -> TeamDetailsSchema:
+        if not self.team_exists_in_org(db, team_id, org_id):
+            raise HTTPException(status_code=404, detail='Team not found in organization.')
+
+        db_team = db.query(Team).filter_by(id=team_id).first()
+
+        members = [
+            MemberSchema(user_id=user.user_id, username=user.user.username)
+            for user in db_team.users
+        ]
+
+        return TeamDetailsSchema(
+            team_id=db_team.id,
+            team_name=db_team.name,
+            members=members,
+            creator_id=db_team.creator_id,
+            creator_name=self.get_username_by_id(db_team.creator_id, db),
+        )
+
+
     def get_user_organizations(self, db: DBSession, user_id: str) -> OrganizationsSchema:
-        db_user_orgs = db.query(UserOrg).filter(UserOrg.user_id == user_id).all()
+        db_user_orgs = db.query(UserOrg).filter_by(user_id=user_id).all()
 
         organizations = []
         for db_user_org in db_user_orgs:
-            org = db.query(Org).filter(Org.id == db_user_org.org_id).first()
-            if org:
+            db_org = db.query(Org).filter_by(id=db_user_org.org_id).first()
+            if db_org:
                 organization = OrganizationSchema(
-                    org_id=org.id,
-                    name=org.name,
-                    creator_id=org.creator_id,
-                    create_datetime=org.create_time,
+                    org_id=db_org.id,
+                    org_name=db_org.name,
                 )
                 organizations.append(organization)
 

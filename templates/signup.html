@@ -2,13 +2,13 @@
 
 {% block head %}
 <script src="{{ url_for('static', path='jquery-3.7.0.min.js') }}"></script>
-<script src="{{ url_for('static', path='auth_lib.js') }}"></script>
+<script src="{{ url_for('static', path='jquery_post_lib.js') }}"></script>
 {% endblock %}
 
 {% block body %}
-<main class="container" id="auth">
+<main class="container" id="mini">
     <article>
-        <form class="auth-form" id="signup-form">
+        <form class="mini-form" id="signup-form">
             <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="Calendar">
             <h1>Erstellen Sie Ihren Account</h1>
             <label for="username">Benutzername</label>

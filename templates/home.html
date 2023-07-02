@@ -5,15 +5,20 @@
 {% endblock %}
 
 {% block body %}
-<main class="container">
+<main class="container-fluid">
+  <h1>Dashboard</h1>
+  <h2>Organisationen</h2>
   <div class="grid">
     {% for organization in organizations %}
-    <article class="organization" id="{{organization.org_id}}">
-      <div class="logo">
-        <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
-      </div>
-      <h3>{{ organization.name }}</h3>
-    </article>
+      <article class="organization" id="{{organization.org_id}}">
+    <a href="/org/{{organization.org_id}}">
+        <div class="logo">
+          <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
+        </div>
+        <h3>{{ organization.org_name }}</h3>
+    </a>
+        <a href="/org/{{organization.org_id}}/calendar">Kalender</a>
+      </article>
     {% endfor %}
   </div>
 </main>

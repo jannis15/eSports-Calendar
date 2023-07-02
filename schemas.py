@@ -19,9 +19,36 @@ class OrganizationCreateSchema(BaseModel):
 
 class OrganizationSchema(BaseModel):
     org_id: str
-    name: str
+    org_name: str
+
+
+class MemberSchema(BaseModel):
+    user_id: str
+    username: str
+
+
+class TeamSchema(BaseModel):
+    team_id: str
+    team_name: str
+    members: List[MemberSchema]
+
+
+class TeamDetailsSchema(TeamSchema):
     creator_id: str
+    creator_name: str
+    creator_datetime: str
+
+
+class TeamCreateSchema(BaseModel):
+    team_name: str
+
+
+class OrganizationDetailsSchema(OrganizationSchema):
+    creator_id: str
+    creator_name: str
     create_datetime: datetime
+    members: List[MemberSchema]
+    teams: List[TeamSchema]
 
 
 class OrganizationsSchema(List[OrganizationSchema]):

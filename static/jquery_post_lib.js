@@ -74,7 +74,35 @@ $(document).ready(() => {
                 console.log('Error:', xhr.responseText);
             }
         });
-    });    
+    });
+
+    $("#create-team-form").submit((event) => {
+        event.preventDefault();
+
+        // declaration
+        const teamNameEl = document.getElementById("team-name");
+        const teamName = teamNameEl.value;
+
+        const url = window.location.href;
+        const urlParts = url.split('/');
+        const orgId = urlParts[urlParts.length - 2];
+
+        // AJAX call with JQuery
+        $.ajax({
+            url: '/org/' + orgId + '/team-creation',
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            data: JSON.stringify({team_name: teamName}),
+            beforeSend: handleAjaxStart,
+            complete: handleAjaxComplete,
+            success: (response) => {
+                window.location.href = '/org/' + orgId + '/team/' + response.team_id;
+            },
+            error: (xhr) => {
+                alert(xhr.responseText);
+            }
+        });
+    });
 
     $("#signup-form").submit((event) => {
         event.preventDefault();

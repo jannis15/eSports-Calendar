@@ -1,4 +1,4 @@
-from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema
+from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema
 from utils import hash_password, verify_password
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -44,7 +44,7 @@ async def get_home(request: Request, token: str = Cookie(None), db: DBSession = 
     })
 
 
-@app.get('/{org_id}/calendar')
+@app.get('/org/{org_id}/calendar')
 async def get_detail_home(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
@@ -53,6 +53,59 @@ async def get_detail_home(org_id, request: Request, token: str = Cookie(None), d
     return templates.TemplateResponse("calendar_detail.html", {
         "request": request,
         "user_id": user_id,
+    })
+
+
+@app.get('/org/{org_id}/team-creation')
+async def get_detail_home(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+
+    return templates.TemplateResponse("create_team.html", {
+        "request": request,
+        "user_id": user_id,
+    })
+
+
+@app.post('/org/{org_id}/team-creation')
+async def get_detail_home(request: TeamCreateSchema, org_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+
+    team_id = db_handler.create_team(user_id, request.team_name, org_id, db)
+
+    return {
+        "message": "Registration successful",
+        "user_id": user_id,
+        "team_id": team_id,
+    }
+
+
+@app.get('/org/{org_id}')
+async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+
+
+    return templates.TemplateResponse("org.html", {
+        "request": request,
+        "organization_details": db_handler.get_organization_details(org_id, db),
+    })
+
+
+@app.get('/org/{org_id}/team/{team_id}')
+async def get_org(org_id, team_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+
+
+    return templates.TemplateResponse("org.html", {
+        "request": request,
+        "team_details": db_handler.get_team_details(db, org_id, team_id),
     })
 
 

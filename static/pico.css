@@ -620,11 +620,11 @@ body > footer {
   }
 }
 
-@media (min-width: 1760px) {
+/* @media (min-width: 1760px) {
   .container {
     max-width: 1584px;
   }
-}
+} */
 
 /**
  * Section
