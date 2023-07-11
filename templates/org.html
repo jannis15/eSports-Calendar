@@ -1,28 +1,71 @@
-{% extends "base_layout.html" %}
+{% extends "calendar_layout.html" %}
 
 {% block head %}
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
+<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
 {% endblock %}
 
 {% block body %}
-<main class="container-fluid">
-  <h1>{{ organization_details.org_name }}</h1>
-  <h3>{{ organization_details.creator_name }} | {{ organization_details.create_datetime }}</h3>
-  <button onclick="location.href='/org/{{ organization_details.org_id }}/calendar'" type="button">Kalender</button>
-  <button onclick="location.href='/org/{{ organization_details.org_id }}/team-creation'" type="button">Team erstellen</button>
+  <aside>
+    {% for team in organization_details.teams %}
+    {% if not (team.team_id == "-1" and team.members|length == 0) %}
+    <section>
+      <b>{{ team.team_name }}</b>
+      <ul>
+        {% for member in team.members %}
+        <li class="user-preview-item">
+          <span class=".user-preview-pic">
+            <img src="{{ url_for('static', path='img/user-16-2.svg') }}" alt="">
+          </span>
+          <span class="user-preview-name">{{ member.username }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    {% endfor %}
+  </aside>
 
-  <h2>Mitglieder ({{ organization_details.members|length }})</h2>
-  {% for member in organization_details.members %}
-    <article class="member" id="{{member.user_id}}">
-      <h3>{{ member.username }}</h3>
-    </article>
-  {% endfor %}
+  <main class="management-main">
+    <section>
+      <header class="management-header">
+        <div class="logo-header org">
+          <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
+        </div>
+        <img src="" alt="">
+        <div>
+          <h1>{{ organization_details.org_name }}</h1>
+          <h5 id="create-info">{{ organization_details.creator_name }}</h>
+        </div>
+      </header>
+      <div class="grid management-main-button-wrapper">
+        <button class="management-main-button" onclick="location.href='/org/{{ organization_details.org_id }}/calendar'" type="button">
+          <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
+          <figcaption>Kalender</figcaption>
+        </button>
 
-    <h2>Teams ({{ organization_details.teams|length }})</h2>
-  {% for team in organization_details.teams %}
-    <article class="team" id="{{team.team_id}}">
-      <h3>{{ team.team_name }}</h3>
-    </article>
+        <button class="management-main-button" onclick="location.href='/org/{{ organization_details.org_id }}/team-creation'" type="button">
+          <img src="{{ url_for('static', path='img/users-32-2.svg') }}" alt="team-logo"></img>
+          <figcaption>Team erstellen</figcaption>
+        </button>
+      </div>
+  
+    <h2>Teams</h2>
+    {% for team in organization_details.teams %}
+    {% if team.team_id != "-1" %}
+      <article class="team-card" id="{{team.team_id}}">
+        <h3>{{ team.team_name }}</h3>
+        <a href="/org/{{ organization_details.org_id }}/team/{{team.team_id}}">Ansehen</a>
+      </article>
+    {% endif %}
   {% endfor %}
-</main>
+    </section>
+  </main>
+
+  <script>
+    createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.create_datetime }}");
+    const createDatetimeElement = document.getElementById("create-info");
+    createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
+  </script>
+
 {% endblock %}

@@ -45,7 +45,7 @@ async def get_home(request: Request, token: str = Cookie(None), db: DBSession = 
 
 
 @app.get('/org/{org_id}/calendar')
-async def get_detail_home(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def get_calendar_detail(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
@@ -53,11 +53,12 @@ async def get_detail_home(org_id, request: Request, token: str = Cookie(None), d
     return templates.TemplateResponse("calendar_detail.html", {
         "request": request,
         "user_id": user_id,
+        "calendar": db_handler.get_org_calendar_details(org_id, db),
     })
 
 
 @app.get('/org/{org_id}/team-creation')
-async def get_detail_home(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def get_team_creation(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
@@ -69,10 +70,12 @@ async def get_detail_home(org_id, request: Request, token: str = Cookie(None), d
 
 
 @app.post('/org/{org_id}/team-creation')
-async def get_detail_home(request: TeamCreateSchema, org_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def post_team_creation(request: TeamCreateSchema, org_id, token: str = Cookie(None),
+                             db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
-        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+        raise HTTPException(status_code=403, detail='You are not eligible to create a team because you are not a '
+                                                    'member of the organization.')
 
     team_id = db_handler.create_team(user_id, request.team_name, org_id, db)
 
@@ -83,12 +86,39 @@ async def get_detail_home(request: TeamCreateSchema, org_id, token: str = Cookie
     }
 
 
+@app.post('/org/{org_id}/team/{team_id}/join-team')
+async def join_team(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not eligible to join a team because you are not a member '
+                                                    'of the organization.')
+
+    db_handler.add_user_to_team(user_id, team_id, org_id, user_id, db)
+
+    return {
+        "message": "Team join successful",
+    }
+
+
+@app.post('/org/{org_id}/team/{team_id}/leave-team')
+async def leave_team(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not eligible to leave a team because you are not a '
+                                                    'member of the organization.')
+
+    db_handler.delete_user_from_team(user_id, team_id, org_id, user_id, db)
+
+    return {
+        "message": "Team join successful",
+    }
+
+
 @app.get('/org/{org_id}')
 async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
-
 
     return templates.TemplateResponse("org.html", {
         "request": request,
@@ -97,13 +127,12 @@ async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSes
 
 
 @app.get('/org/{org_id}/team/{team_id}')
-async def get_org(org_id, team_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def get_team(org_id, team_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
 
-
-    return templates.TemplateResponse("org.html", {
+    return templates.TemplateResponse("team.html", {
         "request": request,
         "team_details": db_handler.get_team_details(db, org_id, team_id),
     })
@@ -143,7 +172,7 @@ async def get_signup(request: Request):
 async def post_register(credentials: RegistrationCredentials, db: DBSession = Depends(get_db)):
     credentials.password = hash_password(credentials.password)
     user_id = db_handler.create_user(credentials, db)
-    db_handler.add_user_to_organization(db, user_id, 'acf2f88980964af9914ff1767686e05e')
+    db_handler.add_user_to_organization(db, user_id, '471562e44f9c41a6b262235386e94044')
     return {
         "message": "Registration successful",
         "user_id": user_id,

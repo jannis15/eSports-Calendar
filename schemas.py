@@ -34,9 +34,10 @@ class TeamSchema(BaseModel):
 
 
 class TeamDetailsSchema(TeamSchema):
+    org_id: str
     creator_id: str
     creator_name: str
-    creator_datetime: str
+    create_datetime: datetime
 
 
 class TeamCreateSchema(BaseModel):
@@ -47,12 +48,38 @@ class OrganizationDetailsSchema(OrganizationSchema):
     creator_id: str
     creator_name: str
     create_datetime: datetime
-    members: List[MemberSchema]
     teams: List[TeamSchema]
 
 
 class OrganizationsSchema(List[OrganizationSchema]):
     pass
+
+
+class EventSchema(BaseModel):
+    id: str
+    title: str
+    memo: str
+    start_point: datetime
+    end_point: datetime
+    event_priority: str
+
+
+class MemberWithEventsSchema(BaseModel):
+    user_id: str
+    username: str
+    events: List[EventSchema]
+
+
+class TeamWithEventsSchema(BaseModel):
+    team_id: str
+    team_name: str
+    events: List[EventSchema]
+    members: List[MemberWithEventsSchema]
+
+
+class OrgCalendarSchema(BaseModel):
+    teams: List[TeamWithEventsSchema]
+
 
 # class EventPrioritySchema(BaseModel):
 #     id: str

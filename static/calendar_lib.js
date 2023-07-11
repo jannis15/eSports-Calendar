@@ -105,3 +105,10 @@ function getSRGBValue(color) {
   const sRGBValue = color / 255;
   return sRGBValue;
 }
+
+function formatDateDDMMYYYY(dateStr) {
+  const [datePart] = dateStr.split(' ');
+  const [year, month, day] = datePart.split('-');
+
+  return `${day}.${month}.${year}`;
+}

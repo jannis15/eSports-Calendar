@@ -5,8 +5,11 @@
   --primary-focus: rgba(204, 52, 62, 0.25);
   --card-background-color: rgb(32, 30, 30);
   --bg-color: rgb(23, 22, 22);
-  --fc-today-bg-color: transparent;
   
+  --main-text-color: #edf0f3; 
+  --sub-text-color: #bbc6ce;
+  
+  --fc-today-bg-color: transparent;
   --fc-button-bg-color: var(--primary);
   --fc-page-bg-color: var(--bg-color);
   --fc-button-hover-bg-color: var(--primary-hover);
@@ -16,6 +19,10 @@
 
 main {
   padding: 1rem !important;
+}
+
+section {
+  margin-bottom: 1em;
 }
 
 a, button {
@@ -42,6 +49,7 @@ article {
 }
 
 nav {
+  height: 4rem;
   z-index: 99;
   position: sticky;
   top: 0;
@@ -201,10 +209,6 @@ button.certain:hover {
   width: 12px;
 }
 
-::-webkit-scrollbar-track {
-  background-color: var(--card-background-color);
-}
-
 ::-webkit-scrollbar-thumb {
   background-color: var(--primary);
   border-radius: 1em;
@@ -247,4 +251,175 @@ article.organization img {
   object-fit: cover;
   border-radius: 50%;
   box-shadow: .25rem .25rem .25rem #00000048;
+}
+
+/* Management */
+
+aside {
+  position: fixed;
+  left: 0;
+  top: 4rem;
+  bottom: 0;
+  width: 12rem;
+  padding: 1rem;
+  border-right: solid 2px var(--color);
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--bg-color);
+}
+
+aside b {
+  text-transform: uppercase;
+  font-size: small;
+}
+
+aside ul {
+  margin: 0;
+  padding: 0;
+}
+
+aside ul li {
+  margin: 0;
+  padding: 0;
+}
+
+.management-main {
+  margin-left: 12rem;
+  width: unset;
+  display: flex;
+  justify-content: center;
+}
+
+.management-main.team {
+  margin-left: unset;
+}
+
+.management-main section {
+  width: 32rem;
+}
+
+.management-main h2 {
+  text-align: center;
+}
+
+.management-header {
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-header {
+  flex-shrink: 0;
+  background-color: var(--card-background-color);
+  width: 8rem; 
+  height: 8rem;
+  border: 2px solid var(--main-text-color);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.logo-header.team {
+  border-radius: .5em;
+}
+
+.org-logo-header img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.normal-text {
+  font-weight: normal;
+}
+
+.management-main-button {
+  flex-shrink: 0;
+  border-radius: .5em;
+  background-color: var(--card-background-color);
+  border: 1px solid transparent;
+}
+
+.management-main-button:hover {
+  border-color: var(--main-text-color);
+}
+
+.management-main-button-wrapper {
+  margin-bottom: 2rem;
+}
+
+.management-main-button-wrapper figcaption {
+  color: var(--main-text-color);
+}
+
+.user-preview-item {
+  margin-bottom: .25rem;
+  display: flex;
+  align-items: center;
+
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.user-preview-name {
+  flex-grow: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.\.user-preview-pic {
+  background-color: var(--card-background-color);
+  border: 1px solid var(--sub-text-color);
+  border-radius: 50%;
+  margin-left: .5em;
+  margin-right: .5em;
+  padding: .1em;
+
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.team-card a,
+.team-card h3 {
+  position: relative;
+  z-index: 3;
+}
+
+.team-card::before {
+  left: -25%;
+  background-color: var(--primary); 
+  opacity: 0.10;
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  height: 100%;
+  width: 93%;
+  -webkit-transform: skew(-30deg);
+  transform: skew(-30deg);
+}
+
+/* Team-Page */
+
+.member-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1em;
+}
+
+.member-card {
+  padding: 1em;
+  text-align: center;
 }

@@ -1,12 +1,13 @@
 $(document).ready(() => {
+    const url = window.location.href;
     const submitBtn = document.getElementById("submit");
 
-    function handleAjaxStart() {
-        submitBtn.setAttribute("aria-busy", "true");
+    function handleAjaxStart(el) {
+        el.setAttribute("aria-busy", "true");
     }
 
-    function handleAjaxComplete() {
-        submitBtn.removeAttribute("aria-busy");
+    function handleAjaxComplete(el) {
+        el.removeAttribute("aria-busy");
     }
 
     $("#login-form").submit((event) => {
@@ -28,8 +29,8 @@ $(document).ready(() => {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             data: JSON.stringify({username: username, password: password}),
-            beforeSend: handleAjaxStart,
-            complete: handleAjaxComplete,
+            beforeSend: () => {handleAjaxStart(submitBtn)},
+            complete: () => {handleAjaxComplete(submitBtn)},
             success: (response) => {
                 document.cookie = "token="+response.token;
                 const urlParams = new URLSearchParams(window.location.search);
@@ -65,8 +66,8 @@ $(document).ready(() => {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             data: JSON.stringify({name: orgName}),
-            beforeSend: handleAjaxStart,
-            complete: handleAjaxComplete,
+            beforeSend: () => {handleAjaxStart(submitBtn)},
+            complete: () => {handleAjaxComplete(submitBtn)},
             success: (response) => {
                 console.log('Success:', response);
             },
@@ -83,7 +84,6 @@ $(document).ready(() => {
         const teamNameEl = document.getElementById("team-name");
         const teamName = teamNameEl.value;
 
-        const url = window.location.href;
         const urlParts = url.split('/');
         const orgId = urlParts[urlParts.length - 2];
 
@@ -93,8 +93,8 @@ $(document).ready(() => {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             data: JSON.stringify({team_name: teamName}),
-            beforeSend: handleAjaxStart,
-            complete: handleAjaxComplete,
+            beforeSend: () => {handleAjaxStart(submitBtn)},
+            complete: () => {handleAjaxComplete(submitBtn)},
             success: (response) => {
                 window.location.href = '/org/' + orgId + '/team/' + response.team_id;
             },
@@ -132,8 +132,8 @@ $(document).ready(() => {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             data: JSON.stringify({username: username, password: password1}),
-            beforeSend: handleAjaxStart,
-            complete: handleAjaxComplete,
+            beforeSend: () => {handleAjaxStart(submitBtn)},
+            complete: () => {handleAjaxComplete(submitBtn)},
             success: (response) => {
                 window.location.href = '/login';
             },
@@ -146,9 +146,7 @@ $(document).ready(() => {
             }
         });
     });
-});
 
-$(document).ready(() => {
     $('#logout').on("click", (event) => {
         event.preventDefault();
         $.ajax({
@@ -156,6 +154,54 @@ $(document).ready(() => {
             type: 'POST',
             success: (response) => {
                 window.location.href = '/login';
+            },
+            error: (xhr) => {
+                // TODO: Error Handling
+                alert(xhr.responseText);
+            }
+        });
+    });
+
+    $('#join-team').on("click", (event) => {
+        event.preventDefault();
+
+        const joinTeamBtn = document.getElementById("join-team");
+        const pattern = /\/org\/([^/]+)\/team\/([^/]+)/;
+        const matches = url.match(pattern);
+        const orgId = matches[1];
+        const teamId = matches[2];
+
+        $.ajax({
+            url: '/org/' + orgId + '/team/' + teamId + '/join-team',
+            type: 'POST',
+            beforeSend: () => {handleAjaxStart(joinTeamBtn)},
+            complete: () => {handleAjaxComplete(joinTeamBtn)},
+            success: (response) => {
+                location.reload();
+            },
+            error: (xhr) => {
+                // TODO: Error Handling
+                alert(xhr.responseText);
+            }
+        });
+    });
+
+    $('#leave-team').on("click", (event) => {
+        event.preventDefault();
+
+        const leaveTeamBtn = document.getElementById("leave-team");
+        const pattern = /\/org\/([^/]+)\/team\/([^/]+)/;
+        const matches = url.match(pattern);
+        const orgId = matches[1];
+        const teamId = matches[2];
+
+        $.ajax({
+            url: '/org/' + orgId + '/team/' + teamId + '/leave-team',
+            type: 'POST',
+            beforeSend: () => {handleAjaxStart(leaveTeamBtn)},
+            complete: () => {handleAjaxComplete(leaveTeamBtn)},
+            success: (response) => {
+                location.reload();
             },
             error: (xhr) => {
                 // TODO: Error Handling

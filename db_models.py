@@ -32,15 +32,16 @@ class Event(Base):
     memo = Column(String, nullable=False)
     start_point = Column(DateTime, nullable=False)
     end_point = Column(DateTime, nullable=False)
+    priority_id = Column(String, ForeignKey("EventPriority.id"), nullable=False)
     users = relationship("UserEvent", back_populates="event")
-    # teams = relationship("TeamEvent", back_populates="event")
+    teams = relationship("TeamEvent", back_populates="event")
 
 
 class EventPriority(Base):
     __tablename__ = "EventPriority"
 
     id = Column(String, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     detail = Column(String, nullable=False)
     color = Column(String, nullable=False)
 
@@ -50,7 +51,6 @@ class UserEvent(Base):
 
     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
     event_id = Column(String, ForeignKey("Event.id"), primary_key=True)
-    priority_id = Column(String, ForeignKey("EventPriority.id"), nullable=False)
     user = relationship("User", back_populates="events")
     event = relationship("Event", back_populates="users")
 
@@ -76,7 +76,7 @@ class Team(Base):
     create_datetime = Column(DateTime, nullable=False)
     users = relationship("UserTeam", back_populates="team")
     org = relationship("Org", back_populates="teams")
-    # events = relationship("TeamEvent", back_populates="team")
+    events = relationship("TeamEvent", back_populates="team")
 
 
 class UserTeam(Base):
@@ -96,18 +96,12 @@ class UserOrg(Base):
     entry_date_time = Column(DateTime, nullable=False)
     user = relationship("User", back_populates="orgs")
     org = relationship("Org", back_populates="users")
-#
-#
-#
-# class TeamEvent(Base):
-#     __tablename__ = "TeamEvent"
-#
-#     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
-#     event_id = Column(String, ForeignKey("Event.id"), primary_key=True)
-#     priority_id = Column(String, ForeignKey("EventPriority.id"), nullable=False)
-#     team = relationship("Team", back_populates="events")
-#     event = relationship("Event", back_populates="teams")
-#
-#
-#
-#
+
+
+class TeamEvent(Base):
+    __tablename__ = "TeamEvent"
+
+    team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
+    event_id = Column(String, ForeignKey("Event.id"), primary_key=True)
+    team = relationship("Team", back_populates="events")
+    event = relationship("Event", back_populates="teams")
