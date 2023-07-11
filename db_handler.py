@@ -416,7 +416,7 @@ class DBHandler:
 
         teamless_members = (
             db.query(User)
-            .innerjoin(UserOrg, User.id == UserOrg.user_id)
+            .join(UserOrg, User.id == UserOrg.user_id)
             .outerjoin(UserTeam, User.id == UserTeam.user_id)
             .filter(UserTeam.user_id.is_(None))
             .filter(UserOrg.org_id == org_id)
