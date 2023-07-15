@@ -2,17 +2,21 @@
 
 
 {% block head %}
-    <script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/index.global.min.js') }}"></script>
-    <script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/locales/de.js') }}"></script>
-    <script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
-    {% endblock %}
-    
-    {% block body %}
-    <main class="container-fluid">
-        <div id="calendar"></div>
-    </main>
-    
+<script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/index.global.min.js') }}"></script>
+<script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/locales/de.js') }}"></script>
+<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
+{% endblock %}
+
+{% block body %}
+<main class="container-fluid">
+  <div id="calendar"></div>
+  <div class="calendar-footer">
+    <a href="#" id="calendar-save-btn" class="icon-button" role="button"><img
+            src="{{ url_for('static', path='img/save-24-2.svg') }}" alt="">Speichern</a>
+  </div>
+</main>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
@@ -21,6 +25,7 @@
             schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
             locale: 'de',
             allDayMaintainDuration: true,
+            eventInteractive: true,
             initialView: 'resourceTimelineDay',
             nowIndicator: true,
             contentHeight: "auto",
@@ -68,65 +73,103 @@
             },
         });
 
-        calendar.addResource({
-          id: 'team eSports',
-          title: 'Kronic eSports'
-        });
+        {% for team in calendar.teams %}
+          calendar.addResource({
+            id: 'team{{ team.team_id }}',
+            title: '{{ team.team_name }}',
+          });
+          {% for event in team.events %}
+            calendar.addEvent({
+                    id: event.id,
+                    title: event.title,
+                    start: event.start_point,
+                    resourceId: 'team{{ team.id }}',
+                    end: event.end_point,
+                    resizable: true,
+                    extendedProps: event.event_priority,
+            });
+          {% endfor %}
+          {% for member in team.members %}
+          calendar.addResource({
+            id: 'member{{ member.user_id }}',
+            parentId: 'team{{ team.team_id }}',
+            title: '{{ member.username }}',
+          });
+          {% for event in member.events %}
+            calendar.addEvent({
+                    id: event.id,
+                    resourceId: 'member{{ member.id }}',
+                    title: event.title,
+                    start: event.start_point,
+                    end: event.end_point,
+                    resizable: true,
+                    extendedProps: event.event_priority,
+            });
+            {% endfor %}
+          {% endfor %}
+        {% endfor %}
 
-        calendar.addResource({
-          id: 'team Valiant',
-          title: 'Kronic Valiant'
-        });
+        const saveBtn = document.getElementById("calendar-save-btn");
+        saveBtn.addEventListener("click", (clickEvent) => {
+          function eventsToJSON(events) {
+            jsonEvents = [];
+            events.map((event) => {
+              jsonEvents.push({
+                id: event.id,
+                title: event.title,
+                memo: '',
+                start_point: event.start,
+                end_point: event.end,
+                event_priority: event.extendedProps,
+              });
+            })
+            return jsonEvents;
+          }
+        
+          function membersToJSON(memberResources) {
+            return memberResources.map((memberResource) => {
+              return {
+                user_id: memberResource.id,
+                username: memberResource.title,
+                events: eventsToJSON(memberResource.getEvents()),
+              }
+            });
+          }
+    
+          clickEvent.preventDefault();
+          teamResources = calendar.getTopLevelResources();
+    
+          teamsJSON = teamResources.map((teamResource) => {
+            return {
+              team_id: teamResource.id,
+              team_name: teamResource.title,
+              events: eventsToJSON(teamResource.getEvents()),
+              members: membersToJSON(teamResource.getChildren()),
+            };
+          });
+          const jsonData = JSON.stringify({teams: teamsJSON});
 
-        calendar.addResource({
-          id: 'team Ally Owngoaling',
-          title: 'Kronic Ally Owngoaling'
-        });
-
-        calendar.addResource({
-          id: 'team Black',
-          title: 'Kronic Black'
-        });
-
-        calendar.addResource({
-            parentId: 'team eSports',
-            title: 'Timo'
-        });
-
-        calendar.addResource({
-            parentId: 'team eSports',
-            title: 'Jannis'
-        });
-
-        calendar.addResource({
-            parentId: 'team eSports',
-            title: 'Mardi'
-        });
-
-        calendar.addResource({
-            parentId: 'team eSports',
-            title: 'Marvin'
-        });
-
-        calendar.addResource({
-            parentId: 'team Valiant',
-            title: ''
-        });
-
-        calendar.addResource({
-            parentId: 'team Black',
-            title: ''
-        });
-
-        calendar.addResource({
-            parentId: 'team Ally Owngoaling',
-            title: ''
-        });
-
+          console.log(teamResourcesJSON);
+    
+          // Make POST request to server with event data
+          // $.ajax({
+          //   url: '/event_data',
+          //   type: 'POST',
+          //   contentType: 'application/json',
+          //   data: JSON.stringify(EventDataList),
+          //   beforeSend: () => {StartLoading(saveBtn)},
+          //   complete: () => {StopLoading(saveBtn)},
+          //   success: (data) => {
+          //     updateEvents(data.events);
+          //   },
+          //   error: (xhr) => {
+          //     alert(xhr.responseJSON.detail);
+          //   }
+          // });
+          });
 
         calendar.render();
     });
-
 
   // declarations
   const controlsEl = document.createElement('div');
@@ -164,6 +207,8 @@
   ];
 
   document.addEventListener('DOMContentLoaded', () => { calendarInit(); });
+
+
 </script>
 
 {% endblock %}

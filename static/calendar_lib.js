@@ -37,6 +37,7 @@ function calendarInit() {
   buttons.forEach((button) => {
     const buttonEl = document.createElement('button');
     buttonEl.classList.add(button.className);
+    buttonEl.classList.add('icon-button');
     buttonEl.classList.add('event-priority-button', 'outline'); 
 
     const iconEl = document.createElement('img');

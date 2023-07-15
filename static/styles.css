@@ -57,6 +57,7 @@ nav {
   left: 0;
   padding: 0 var(--spacing);
   background-color: var(--bg-color);
+  border-bottom: 2px solid rgba(255,255,255,0.15);
 }
 
 input {
@@ -187,19 +188,28 @@ button.certain:hover {
   padding: 0.25em;
 }
 
-.event-priority-button {
-  color: #e8e9e9;
-  border: .1em;
-  border-style: solid;
-  font-weight: bold;
+.icon-button {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.event-priority-button-icon {
+.icon-button > img {
   margin-right: .25em;
   margin-left: .25em;
+}
+
+.calendar-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1em;
+}
+
+.event-priority-button {
+  color: #e8e9e9;
+  border: .1em;
+  border-style: solid;
+  font-weight: bold;
 }
 
 /* Scrollbar */
@@ -262,7 +272,7 @@ aside {
   bottom: 0;
   width: 12rem;
   padding: 1rem;
-  border-right: solid 2px var(--color);
+  border-right: 2px solid rgba(255,255,255,0.15);
   overflow-x: hidden;
   overflow-y: auto;
   background-color: var(--bg-color);
