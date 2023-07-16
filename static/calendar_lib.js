@@ -4,6 +4,7 @@ const EventPriority = {
   Uncertain: 'uncertain',
   Certain: 'certain',
 };
+
 function GetEventPriorityColor(eventPriority) {
   switch (eventPriority) {
     case EventPriority.Standard:
@@ -17,6 +18,14 @@ function GetEventPriorityColor(eventPriority) {
     default:
       return '#edf0f3';
     }
+};
+
+function StartLoading(el) {
+  el.setAttribute("aria-busy", "true");
+};
+
+function StopLoading(el) {
+  el.removeAttribute("aria-busy");
 };
 
 function handleEventPriorityButtonClick(eventPriority) {

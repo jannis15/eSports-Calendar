@@ -1,15 +1,16 @@
-from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema
-from utils import hash_password, verify_password
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+import uvicorn
 from fastapi import FastAPI, Request, Response, HTTPException, Depends, Cookie
 from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session as DBSession
-from db_handler import DBHandler, get_db
+
 import db_models
+from db_handler import DBHandler, get_db
 from db_session import engine
-import uvicorn
-import db_event_listener
+from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema,\
+    OrgCalendarSchema
+from utils import hash_password, verify_password
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -52,9 +53,17 @@ async def get_calendar_detail(org_id, request: Request, token: str = Cookie(None
 
     return templates.TemplateResponse("calendar_detail.html", {
         "request": request,
+        "org_id": org_id,
+        "org_name": db_handler.get_org_name_by_id(db, org_id),
         "user_id": user_id,
         "calendar": db_handler.get_org_calendar_details(org_id, db),
     })
+
+
+@app.post('/org/{org_id}/calendar')
+async def post_calendar_details(org_id, calendar_details: OrgCalendarSchema, token: str = Cookie(None),
+                                db: DBSession = Depends(get_db)):
+    return {}
 
 
 @app.get('/org/{org_id}/team-creation')
@@ -65,6 +74,8 @@ async def get_team_creation(org_id, request: Request, token: str = Cookie(None),
 
     return templates.TemplateResponse("create_team.html", {
         "request": request,
+        "org_id": org_id,
+        "org_name": db_handler.get_org_name_by_id(db, org_id),
         "user_id": user_id,
     })
 
@@ -81,6 +92,7 @@ async def post_team_creation(request: TeamCreateSchema, org_id, token: str = Coo
 
     return {
         "message": "Registration successful",
+        "org_id": org_id,
         "user_id": user_id,
         "team_id": team_id,
     }
@@ -96,6 +108,7 @@ async def join_team(org_id, team_id, token: str = Cookie(None), db: DBSession = 
     db_handler.add_user_to_team(user_id, team_id, org_id, user_id, db)
 
     return {
+        "user_id": user_id,
         "message": "Team join successful",
     }
 
@@ -111,6 +124,7 @@ async def leave_team(org_id, team_id, token: str = Cookie(None), db: DBSession =
 
     return {
         "message": "Team join successful",
+        "user_id": user_id,
     }
 
 
@@ -120,8 +134,12 @@ async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSes
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
 
+
     return templates.TemplateResponse("org.html", {
         "request": request,
+        "org_id": org_id,
+        "org_name": db_handler.get_org_name_by_id(db, org_id),
+        "user_id": user_id,
         "organization_details": db_handler.get_organization_details(org_id, db),
     })
 
@@ -134,6 +152,9 @@ async def get_team(org_id, team_id, request: Request, token: str = Cookie(None),
 
     return templates.TemplateResponse("team.html", {
         "request": request,
+        "org_id": org_id,
+        "org_name": db_handler.get_org_name_by_id(db, org_id),
+        "user_id": user_id,
         "team_details": db_handler.get_team_details(db, org_id, team_id),
     })
 
@@ -197,7 +218,7 @@ async def post_org(request: OrganizationCreateSchema, token: str = Cookie(None),
         org_id = db_handler.create_organization(user_id, request.name, db)
         return {
             "message": "Organization created successfully.",
-            "organization_id": org_id,
+            "org_id": org_id,
         }
     else:
         raise HTTPException(status_code=403, detail='Only the admin can create an organization.')

@@ -12,11 +12,11 @@
         <body>
             <nav>
                 <ul>
-                  <li><a href="#"><strong>Undefined</strong></a></li>
+                  <li><a href="/org/{{ org_id }}"><strong>{{ org_name }}</strong></a></li>
                 </ul>
                 <ul>
                   <li><a href="/">Dashboard</a></li>
-                  <li><a id="logout" href="#" role="button">Abmelden</a></li>
+                  <li><a class="icon-button outline" id="logout" href="#" role="button">Abmelden</a></li>
                 </ul>
             </nav>
             {% block body %}

@@ -64,21 +64,32 @@ class EventSchema(BaseModel):
     event_priority: str
 
 
-class MemberWithEventsSchema(BaseModel):
+class MemberEventsSchema(BaseModel):
     user_id: str
     username: str
     events: List[EventSchema]
 
 
-class TeamWithEventsSchema(BaseModel):
+class TeamEventsMembersSchema(BaseModel):
     team_id: str
     team_name: str
+    creator_id: str
     events: List[EventSchema]
-    members: List[MemberWithEventsSchema]
+    members: List[MemberEventsSchema]
+
+
+class PostMemberEventsSchema(BaseModel):
+    user_id: str
+    events: List[EventSchema]
+
+
+class PostTeamEventsSchema(BaseModel):
+    team_id: str
+    events: List[EventSchema]
 
 
 class OrgCalendarSchema(BaseModel):
-    teams: List[TeamWithEventsSchema]
+    teams: List[TeamEventsMembersSchema]
 
 
 # class EventPrioritySchema(BaseModel):

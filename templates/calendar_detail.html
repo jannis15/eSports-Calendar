@@ -24,8 +24,9 @@
         const calendar = new FullCalendar.Calendar(calendarEl, {
             schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
             locale: 'de',
+            resourceAreaWidth: '9em',
+            resourceOrder: 'title,id',
             allDayMaintainDuration: true,
-            eventInteractive: true,
             initialView: 'resourceTimelineDay',
             nowIndicator: true,
             contentHeight: "auto",
@@ -48,28 +49,62 @@
                 } else {
                     iconUrl = "{{ url_for('static', path='img/user-16-2.svg') }}";
                 }
-                return { html: '<img src="'+iconUrl+'" style="margin-left: .5em; margin-right: .5em">' + arg.resource.title };
+                return { html: '<img src="'+iconUrl+'" style="margin-left: .25em; margin-right: .5em">' + arg.resource.title };
             },
             select: (info) => {
-                console.log(info);
-                // create a new event object
-                let eventData = {
+                if (info.resource.eventAllow(info, info)) {
+                  const memberId = info.resource.id.split('team')[0].substring(6);
+                  resourceIds = [info.resource._resource.id];
+
+                  if (info.resource.id.startsWith('member')) {
+                    const userId = info.resource.id.slice(6);
+                    const userResources = calendar.getResources().filter(resource => resource.id.startsWith(`member${memberId}team`));
+                    
+                    resourceIds = userResources.map((userResource) => { return userResource.id; });
+                  };
+
+                  let eventData = {
                     id: '',
                     title: 'Termin',
                     start: info.startStr,
-                    resourceId: info.resource._resource.id,
+
+                    resourceIds: resourceIds,
                     end: info.endStr,
                     resizable: true,
-                    extendedProps: currentEventPriority,
+                    extendedProps: {priority: currentEventPriority, memo: ''},
                     color: currentEventPriorityColor,
                     textColor: getContrastColor(currentEventPriorityColor),
-                };
+                  };
+                    
+                    calendar.addEvent(eventData);
 
-                // render the event on the calendar
-                calendar.addEvent(eventData);
+                }
                 calendar.unselect();
             },
             eventClick: (info) => {
+                info.jsEvent.preventDefault();
+                const dlg = document.createElement('dialog');
+                dlg.setAttribute('id', 'dlg');
+                dlg.innerHTML = '<article> <header>' +
+                  '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/x-24-2.svg") }} alt=""></a>' +
+                  '</header>' +
+                  '<footer>' +
+                  '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/check-24-2.svg") }} alt=""></a>' +
+                  '</footer> </article>';
+                
+                document.body.appendChild(dlg);
+                const closeBtn = document.getElementById("close-dlg-btn");
+                closeBtn.addEventListener("click", (event) => {
+                  function closeDlg() {
+                      const dlg = document.getElementById("dlg");
+                      dlg.remove();
+                    }
+                  event.preventDefault();
+                  closeDlg();
+                });
+                dlg.open = true;
+                // document.getElementById("title").focus();
+                // document.getElementById("title").select();
             },
         });
 
@@ -77,6 +112,7 @@
           calendar.addResource({
             id: 'team{{ team.team_id }}',
             title: '{{ team.team_name }}',
+            eventAllow: (dropInfo, draggedEvent) => {return '{{ user_id }}' === '{{ team.creator_id }}'; },
           });
           {% for event in team.events %}
             calendar.addEvent({
@@ -86,14 +122,15 @@
                     resourceId: 'team{{ team.id }}',
                     end: event.end_point,
                     resizable: true,
-                    extendedProps: event.event_priority,
+                    extendedProps: {priority: event.event_priority, memo: event.memo},
             });
           {% endfor %}
           {% for member in team.members %}
           calendar.addResource({
-            id: 'member{{ member.user_id }}',
+            id: 'member{{ member.user_id }}team{{ team.team_id }}',
             parentId: 'team{{ team.team_id }}',
             title: '{{ member.username }}',
+            eventAllow: (dropInfo, draggedEvent) => { return '{{ user_id }}' === '{{ member.user_id }}'; },
           });
           {% for event in member.events %}
             calendar.addEvent({
@@ -103,7 +140,7 @@
                     start: event.start_point,
                     end: event.end_point,
                     resizable: true,
-                    extendedProps: event.event_priority,
+                    extendedProps: {priority: event.event_priority, memo: event.memo},
             });
             {% endfor %}
           {% endfor %}
@@ -117,10 +154,10 @@
               jsonEvents.push({
                 id: event.id,
                 title: event.title,
-                memo: '',
+                memo: event.extendedProps.memo,
                 start_point: event.start,
                 end_point: event.end,
-                event_priority: event.extendedProps,
+                event_priority: event.extendedProps.priority,
               });
             })
             return jsonEvents;
@@ -147,26 +184,26 @@
               members: membersToJSON(teamResource.getChildren()),
             };
           });
-          const jsonData = JSON.stringify({teams: teamsJSON});
 
-          console.log(teamResourcesJSON);
-    
-          // Make POST request to server with event data
-          // $.ajax({
-          //   url: '/event_data',
-          //   type: 'POST',
-          //   contentType: 'application/json',
-          //   data: JSON.stringify(EventDataList),
-          //   beforeSend: () => {StartLoading(saveBtn)},
-          //   complete: () => {StopLoading(saveBtn)},
-          //   success: (data) => {
-          //     updateEvents(data.events);
-          //   },
-          //   error: (xhr) => {
-          //     alert(xhr.responseJSON.detail);
-          //   }
-          // });
+          const getOrgIdFromUrl = (url) => url.match(/org\/([^/]+)/)[1];
+          const currentUrl = window.location.href;
+          const orgId = getOrgIdFromUrl(currentUrl);
+
+          $.ajax({
+            url: '/org/'+orgId+'/calendar',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({teams: teamsJSON}),
+            beforeSend: () => {StartLoading(saveBtn)},
+            complete: () => {StopLoading(saveBtn)},
+            success: (data) => {
+              // updateEvents(data.events);
+            },
+            error: (xhr) => {
+              // alert(xhr.responseJSON.detail);
+            }
           });
+        });
 
         calendar.render();
     });

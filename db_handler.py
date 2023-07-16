@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import desc
 from db_session import SessionLocal
 from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema, OrganizationDetailsSchema, \
-    MemberSchema, TeamSchema, TeamDetailsSchema, MemberWithEventsSchema, TeamWithEventsSchema, EventSchema, \
+    MemberSchema, TeamSchema, TeamDetailsSchema, MemberEventsSchema, TeamEventsMembersSchema, EventSchema, \
     OrgCalendarSchema
 from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent
 import uuid
@@ -274,6 +274,12 @@ class DBHandler:
             db.rollback()
             raise HTTPException(status_code=500, detail='Failed to add user to organization.')
 
+    def get_org_name_by_id(self, db: DBSession, org_id: str) -> str:
+        db_org = db.query(Org).filter(Org.id == org_id).first()
+        if db_org:
+            return db_org.name
+        return ""
+
     def get_user_id_and_password(self, db: DBSession, username: str):
         db_user = db.query(User.id, User.password).filter_by(username=username).first()
         if db_user is not None:
@@ -370,10 +376,10 @@ class DBHandler:
             events.append(user_event.event)
         return self.__format_events_to_event_schemas(events)
 
-    def __format_members_to_member_with_events_schemas(self, users: List[UserTeam]) -> List[MemberWithEventsSchema]:
+    def __format_members_to_member_with_events_schemas(self, users: List[UserTeam]) -> List[MemberEventsSchema]:
         members = []
         for user_team in users:
-            member = MemberWithEventsSchema(
+            member = MemberEventsSchema(
                 user_id=user_team.user_id,
                 username=user_team.user.username,
                 events=self.__format_user_events_to_event_schemas(user_team.user.events),
@@ -381,13 +387,14 @@ class DBHandler:
             members.append(member)
         return members
 
-    def get_team_with_events_schema(self, team_id: str, db: DBSession) -> TeamWithEventsSchema:
+    def get_team_with_events_schema(self, team_id: str, db: DBSession) -> TeamEventsMembersSchema:
         db_team = db.query(Team).filter(Team.id == team_id).first()
 
         if db_team:
-            return TeamWithEventsSchema(
+            return TeamEventsMembersSchema(
                 team_id=team_id,
                 team_name=db_team.name,
+                creator_id=db_team.creator_id,
                 events=self.__format_team_events_to_event_schemas(db_team.events),
                 members=self.__format_members_to_member_with_events_schemas(db_team.users),
             )
@@ -398,6 +405,7 @@ class DBHandler:
             self.get_team_with_events_schema(team_id, db)
             for team_id in team_ids
         ]
+        teams.sort(key=lambda team: team.team_name)
         return OrgCalendarSchema(teams=teams)
 
     def get_organization_details(self, org_id: str, db: DBSession) -> OrganizationDetailsSchema:
@@ -413,6 +421,7 @@ class DBHandler:
                                 for user in team.users])
             for team in db_org.teams
         ]
+        teams.sort(key=lambda team: team.team_name)
 
         teamless_members = (
             db.query(User)

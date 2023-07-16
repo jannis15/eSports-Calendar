@@ -4,6 +4,7 @@
   --primary-active: #81212b;
   --primary-focus: rgba(204, 52, 62, 0.25);
   --card-background-color: rgb(32, 30, 30);
+  --card-background-color-2: rgb(44, 42, 42);
   --bg-color: rgb(23, 22, 22);
   
   --main-text-color: #edf0f3; 
@@ -49,7 +50,7 @@ article {
 }
 
 nav {
-  height: 4rem;
+  height: 3.5rem;
   z-index: 99;
   position: sticky;
   top: 0;
@@ -68,7 +69,7 @@ input {
 }
 
 input:focus {
-  border-color: var(--color);
+  border-color: var(--color) !important;
 }
 
 .container {
@@ -76,6 +77,44 @@ input:focus {
 }
 
 /* FullCalendar */
+
+dialog {
+  background-color: rgba(23, 22, 22, 0.3);
+}
+
+dialog article {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  width: 30rem;
+  height: 30rem;
+}
+
+.dlg-button {
+  border: 1px solid transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: .5em !important;
+  padding: .5em !important;
+}
+
+.dlg-button:hover {
+  border: 1px solid #e8e9e9 !important;
+}
+
+header, footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: var(--card-background-color-2) !important;
+}
 
 .fc .fc-button-primary {
   border-width: 0 !important;
@@ -184,14 +223,11 @@ button.certain:hover {
   background-color: #008450;
 }
 
-.event-priority-container > button { 
-  padding: 0.25em;
-}
-
 .icon-button {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: .4em .65em !important;
 }
 
 .icon-button > img {
@@ -268,7 +304,7 @@ article.organization img {
 aside {
   position: fixed;
   left: 0;
-  top: 4rem;
+  top: 3.5rem;
   bottom: 0;
   width: 12rem;
   padding: 1rem;
