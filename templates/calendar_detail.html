@@ -143,6 +143,7 @@
             }
             
             function closeDlg() {
+              document.removeEventListener('keydown', handleEscKeyPress);
               const dlg = document.getElementById("dlg");
               dlg.remove();
             }
@@ -245,7 +246,7 @@
               eventAllow: (dropInfo, draggedEvent) => { return '{{ user_id }}' === '{{ member.user_id }}'; },
             });
 
-            {% for event in team.events %}
+            {% for event in member.events %}
               eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
               calendar.addEvent({
                 id: '{{ event.id }}',
@@ -274,8 +275,8 @@
                 id: event.id,
                 title: event.title,
                 memo: event.extendedProps.memo,
-                start_point: event.start,
-                end_point: event.end,
+                start_point: event.startStr,
+                end_point: event.endStr,
                 event_priority: event.extendedProps.priority,
               });
             })
@@ -309,6 +310,28 @@
             return null; 
           }
 
+          function getMemberId(input) {
+            const memberIdIndex = input.indexOf('member');
+            if (memberIdIndex !== -1) {
+              let memberId = input.substring(memberIdIndex + 6); // Cut off "member" part
+              const teamIndex = memberId.indexOf('team');
+              if (teamIndex !== -1) {
+                memberId = memberId.substring(0, teamIndex); // Cut off "team" and the subsequent characters
+              }
+              return memberId;
+            }
+            return null;
+          }
+
+          function getTeamId(input) {
+            const regex = /team(\w+)/;
+            const match = regex.exec(input);
+            if (match && match.length > 1) {
+              return match[1];
+            }
+            return null;
+          }
+
           clickEvent.preventDefault();
           memberResource = getResourceByUserId('{{ user_id }}');
           teamResources = getAllowedTeamResources();
@@ -316,14 +339,14 @@
           memberJSON = {};
           if (memberResource != null) {
             memberJSON = {
-              user_id: memberResource.id,
+              user_id: getMemberId(memberResource.id),
               events: eventsToJSON(memberResource.getEvents()),
             }
           }
 
           teamsJSON = teamResources.map((teamResource) => {
             return {
-              team_id: teamResource.id,
+              team_id: getTeamId(teamResource.id),
               events: eventsToJSON(teamResource.getEvents()),
             };
           });

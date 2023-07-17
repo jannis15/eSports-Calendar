@@ -116,6 +116,12 @@ function getSRGBValue(color) {
   return sRGBValue;
 }
 
+function formatDateDDMMYYYY(dateStr) {
+  const [datePart] = dateStr.split(' ');
+  const [year, month, day] = datePart.split('-');
+  return `${day}.${month}.${year}`;
+}
+
 function formatDate(dateStr) {
   const date = new Date(dateStr);
   const year = date.getFullYear();

@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session as DBSession
 
+import db_event_listener
 import db_models
 from db_handler import DBHandler, get_db
 from db_session import engine
@@ -63,6 +64,17 @@ async def get_calendar_detail(org_id, request: Request, token: str = Cookie(None
 @app.post('/org/{org_id}/calendar')
 async def post_calendar_details(org_id, calendar_details: PostOrgCalendarSchema, token: str = Cookie(None),
                                 db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if user_id == calendar_details.memberEvents.user_id:
+        db_handler.update_events_for_user(user_id, calendar_details.memberEvents.events, db)
+    else:
+        raise HTTPException(status_code=403, detail='You are not allowed to modify events from the provided user.')
+
+    for team in calendar_details.teamsEvents:
+        db_handler.update_events_for_team(user_id, org_id, team.team_id, team.events, db)
+
+    db_handler.delete_unused_events(db)
+
     return {}
 
 
@@ -193,7 +205,7 @@ async def get_signup(request: Request):
 async def post_register(credentials: RegistrationCredentials, db: DBSession = Depends(get_db)):
     credentials.password = hash_password(credentials.password)
     user_id = db_handler.create_user(credentials, db)
-    db_handler.add_user_to_organization(db, user_id, '471562e44f9c41a6b262235386e94044')
+    db_handler.add_user_to_organization(db, user_id, '082910e16810496681f3704fe3662251')
     return {
         "message": "Registration successful",
         "user_id": user_id,

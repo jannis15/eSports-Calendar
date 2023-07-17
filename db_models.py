@@ -35,6 +35,7 @@ class Event(Base):
     priority_id = Column(String, ForeignKey("EventPriority.id"), nullable=False)
     users = relationship("UserEvent", back_populates="event")
     teams = relationship("TeamEvent", back_populates="event")
+    priority = relationship("EventPriority", back_populates="events")
 
 
 class EventPriority(Base):
@@ -44,6 +45,7 @@ class EventPriority(Base):
     name = Column(String, nullable=False, unique=True)
     detail = Column(String, nullable=False)
     color = Column(String, nullable=False)
+    events = relationship("Event", back_populates="priority")
 
 
 class UserEvent(Base):

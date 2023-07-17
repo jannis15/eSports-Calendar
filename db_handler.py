@@ -2,16 +2,24 @@ from typing import List
 
 from fastapi import HTTPException
 import sqlalchemy.exc
-from sqlalchemy.orm import Session as DBSession
+from sqlalchemy.orm import Session as DBSession, joinedload
 from sqlalchemy import desc
+from sqlalchemy.sql.expression import null
+
 from db_session import SessionLocal
 from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema, OrganizationDetailsSchema, \
     MemberSchema, TeamSchema, TeamDetailsSchema, MemberEventsSchema, TeamEventsMembersSchema, EventSchema, \
     OrgCalendarSchema
-from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent
+from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent, EventPriority
 import uuid
 from datetime import datetime, timezone
 from utils import add_amount_of_days
+from enum import Enum
+
+
+class EventAllocation(Enum):
+    User = 1
+    Team = 2
 
 
 def get_db() -> DBSession:
@@ -24,6 +32,8 @@ def get_db() -> DBSession:
 
 
 class DBHandler:
+    __event_ids_for_optimization = []
+
     def __get_unique_uuid(self, db: DBSession, table) -> str:
         def generate_uuid() -> str:
             random_uuid = uuid.uuid4()
@@ -280,6 +290,121 @@ class DBHandler:
             return db_org.name
         return ""
 
+    def update_events_for_team(self, session_user_id, org_id, team_id: str, events: List[EventSchema], db: DBSession) \
+            -> bool:
+        try:
+            team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
+            if team is None:
+                raise HTTPException(status_code=404, detail='Team not found.')
+            if not self.__is_creator(session_user_id, team.creator_id):
+                raise HTTPException(status_code=403, detail='Only the team creator is allowed to modify events.')
+
+            db_team_events = db.query(TeamEvent).filter(TeamEvent.team_id == team_id).all()
+
+            # Find events to delete
+            team_events_to_delete = []
+            for db_team_event in db_team_events:
+                if db_team_event.event_id not in [event.id for event in events]:
+                    team_events_to_delete.append(db_team_event)
+
+            # Delete events from the database
+            for team_event in team_events_to_delete:
+                self.__event_ids_for_optimization.append(team_event.event_id)
+                db.delete(team_event)
+
+            self.__update_events(events, EventAllocation.Team, team_id, db)
+
+            db.commit()
+            return True
+
+        except Exception as e:
+            db.rollback()
+            raise e
+
+    def update_events_for_user(self, user_id: str, events: List[EventSchema], db: DBSession) -> bool:
+        try:
+            db_user_events = db.query(UserEvent).filter(UserEvent.user_id == user_id).all()
+
+            # Find events to delete
+            user_events_to_delete = []
+            for db_user_event in db_user_events:
+                if db_user_event.event_id not in [event.id for event in events]:
+                    user_events_to_delete.append(db_user_event)
+
+            # Delete events from the database
+            for user_event in user_events_to_delete:
+                self.__event_ids_for_optimization.append(user_event.event_id)
+                db.delete(user_event)
+
+            self.__update_events(events, EventAllocation.User, user_id, db)
+
+            db.commit()
+            return True
+
+        except Exception as e:
+            db.rollback()
+            raise e
+
+    def delete_unused_events(self, db: DBSession) -> bool:
+        if len(self.__event_ids_for_optimization) != 0:
+            unused_events = db.query(Event) \
+                .options(joinedload(Event.users), joinedload(Event.teams)) \
+                .filter(
+                    Event.id.in_(self.__event_ids_for_optimization),
+                    Event.users == null(),
+                    Event.teams == null()
+                ) \
+                .all()
+            for event in unused_events:
+                db.delete(event)
+            db.commit()
+        return True
+
+    def __update_events(self, events: List[EventSchema], event_allocation: EventAllocation, allocation_id: str,
+                        db: DBSession) -> bool:
+        for event in events:
+            db_event = None
+            if event.id != '':
+                db_event = db.query(Event).filter(Event.id == event.id).first()
+
+            event_priority = db.query(EventPriority).filter(EventPriority.name == event.event_priority).first()
+
+            if not event_priority:
+                raise HTTPException(status_code=404, detail=f"Event priority '{event.event_priority}' not found.")
+
+            if db_event:
+                db_event.title = event.title
+                db_event.memo = event.memo
+                db_event.start_point = event.start_point
+                db_event.end_point = event.end_point
+                db_event.priority_id = event_priority.id
+            else:
+                new_event = Event(
+                    id=self.__get_unique_uuid(db, Event),
+                    title=event.title,
+                    memo=event.memo,
+                    start_point=event.start_point,
+                    end_point=event.end_point,
+                    priority_id=event_priority.id
+                )
+                db.add(new_event)
+                event.id = new_event.id
+
+            if event_allocation == EventAllocation.User:
+                user_event = db.query(UserEvent).filter(UserEvent.user_id == allocation_id,
+                                                        UserEvent.event_id == event.id).first()
+                if not user_event:
+                    user_event = UserEvent(user_id=allocation_id, event_id=event.id)
+                    db.add(user_event)
+            elif event_allocation == EventAllocation.Team:
+                team_event = db.query(TeamEvent).filter(TeamEvent.team_id == allocation_id,
+                                                        TeamEvent.team_id == event.id).first()
+                if not team_event:
+                    team_event = TeamEvent(team_id=allocation_id, event_id=event.id)
+                    db.add(team_event)
+
+            return True
+
     def get_user_id_and_password(self, db: DBSession, username: str):
         db_user = db.query(User.id, User.password).filter_by(username=username).first()
         if db_user is not None:
@@ -359,7 +484,7 @@ class DBHandler:
                 memo=event.memo,
                 start_point=event.start_point,
                 end_point=event.end_point,
-                event_priority=event.priority_id,
+                event_priority=event.priority.name,
             )
             events_schemas.append(event_schema)
         return events_schemas
