@@ -398,12 +398,12 @@ class DBHandler:
                     db.add(user_event)
             elif event_allocation == EventAllocation.Team:
                 team_event = db.query(TeamEvent).filter(TeamEvent.team_id == allocation_id,
-                                                        TeamEvent.team_id == event.id).first()
+                                                        TeamEvent.event_id == event.id).first()
                 if not team_event:
                     team_event = TeamEvent(team_id=allocation_id, event_id=event.id)
                     db.add(team_event)
 
-            return True
+        return True
 
     def get_user_id_and_password(self, db: DBSession, username: str):
         db_user = db.query(User.id, User.password).filter_by(username=username).first()
