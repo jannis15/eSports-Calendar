@@ -86,25 +86,116 @@
                 const dlg = document.createElement('dialog');
                 dlg.setAttribute('id', 'dlg');
                 dlg.innerHTML = '<article> <header>' +
+                  '<div class="dialog-header">' +
+                    '<h3> Termin bearbeiten </h3>' +
+                    '<a href="#" id="delete-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/trash-2-24-2.svg") }} alt=""></a>' +
+                  '</div>' +
                   '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/x-24-2.svg") }} alt=""></a>' +
-                  '</header>' +
-                  '<footer>' +
+                  '</header> <form>' +
+
+                  '<div class="grid">' +
+                    '<div>' +
+                      '<label for="dlg-title">Titel</label>' +
+                      '<input type="text" id="dlg-title" placeholder="Termin" value="'+info.event.title+'" required>' +
+                      '<label for="dlg-select-priority">Priorität</label>' +
+                      '<select id="dlg-select-priority">' +
+                        '<option value="'+EventPriority.Standard+'">Standard</option>' +
+                        '<option value="'+EventPriority.NoTime+'">Keine Zeit</option>' +
+                        '<option value="'+EventPriority.Uncertain+'">Unsicher</option>' +
+                        '<option value="'+EventPriority.Certain+'">Sicher</option>' +
+                      '</select>' +
+                    '</div>' + 
+                    '<div>' +
+                      '<label for="dlg-title">Notiz</label>' +
+                      '<textarea id="dlg-memo" rows="5">'+info.event.extendedProps.memo+'</textarea>' +
+                    '</div>' + 
+                  '</div>' +
+                  
+                  '<label>Startpunkt</label>' +
+                    '<div class="grid">' +
+                        '<input type="date" id="dlg-start-date" value="'+formatDate(info.event.startStr)+'" required>' +
+                        '<input type="time" id="dlg-start-time" value="'+formatTime(info.event.startStr)+'" required>' +
+                    '</div>' +
+
+                  '<label>Endpunkt</label>' +
+                    '<div class="grid">' +
+                        '<input type="date" id="dlg-end-date" value="'+formatDate(info.event.endStr)+'" required>' +
+                        '<input type="time" id="dlg-end-time" value="'+formatTime(info.event.endStr)+'" required>' +
+                    '</div>' +
+
+                  '</form> <footer>' +
                   '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/check-24-2.svg") }} alt=""></a>' +
                   '</footer> </article>';
-                
                 document.body.appendChild(dlg);
+
+                const dropdown = document.getElementById('dlg-select-priority');
+                for (let i = 0; i < dropdown.options.length; i++) {
+                  if (dropdown.options[i].value === info.event.extendedProps.priority) {
+                    dropdown.options[i].selected = true;
+                    break;
+                  }
+                }
+                
+                function closeDlg() {
+                  const dlg = document.getElementById("dlg");
+                  dlg.remove();
+                }
+
                 const closeBtn = document.getElementById("close-dlg-btn");
                 closeBtn.addEventListener("click", (event) => {
-                  function closeDlg() {
-                      const dlg = document.getElementById("dlg");
-                      dlg.remove();
-                    }
                   event.preventDefault();
                   closeDlg();
                 });
+
+                const deleteBtn = document.getElementById("delete-dlg-btn");
+                deleteBtn.addEventListener("click", (event) => {
+                  event.preventDefault();
+                  info.event.remove();
+                  closeDlg();
+                });
+
+                const checkBtn = document.getElementById("check-dlg-btn");
+                checkBtn.addEventListener("click", (event) => {
+                  function confirmDlg(info) {
+                    const title = document.getElementById("dlg-title");
+                    const memo = document.getElementById("dlg-memo");
+                    const startDate = document.getElementById("dlg-start-date");
+                    const startTime = document.getElementById("dlg-start-time");
+                    const endDate = document.getElementById("dlg-end-date");
+                    const endTime = document.getElementById("dlg-end-time");
+                    const selectPriority = document.getElementById("dlg-select-priority");
+                    const eventPriorityColor = GetEventPriorityColor(selectPriority.value);
+
+                    info.event.setProp('title', title.value);
+                    info.event.setExtendedProp('memo', memo.value);
+                    info.event.setExtendedProp('priority', selectPriority.value);
+                    info.event.setProp('backgroundColor',eventPriorityColor);
+                    info.event.setProp('borderColor', eventPriorityColor);
+                    info.event.setProp('textColor', getContrastColor(eventPriorityColor));
+
+                    const startStr = startDate.value + "T" + startTime.value;
+                    const endStr = endDate.value + "T" + endTime.value;
+
+                    info.event.setStart(startStr);
+                    info.event.setEnd(endStr);
+                    
+                    closeDlg();
+                  }
+                    event.preventDefault();
+                    confirmDlg(info);
+                });
+
+                function handleEscKeyPress(event) {
+                  if (event.key === 'Escape') {
+                    closeDlg();
+                  }
+                }
+
+                document.addEventListener('keydown', handleEscKeyPress);
+
                 dlg.open = true;
-                // document.getElementById("title").focus();
-                // document.getElementById("title").select();
+                document.getElementById("dlg-title").focus();
+                document.getElementById("dlg-title").select();
             },
         });
 

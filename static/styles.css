@@ -6,6 +6,7 @@
   --card-background-color: rgb(32, 30, 30);
   --card-background-color-2: rgb(44, 42, 42);
   --bg-color: rgb(23, 22, 22);
+  --divider: 2px solid rgba(255,255,255,0.15);
   
   --main-text-color: #edf0f3; 
   --sub-text-color: #bbc6ce;
@@ -61,14 +62,14 @@ nav {
   border-bottom: 2px solid rgba(255,255,255,0.15);
 }
 
-input {
+input, select, textarea {
   background-color: var(--bg-color);
   border-width: 1;
   border-color: Transparent;
   box-shadow: None;
 }
 
-input:focus {
+input:focus, select:focus, textarea:focus {
   border-color: var(--color) !important;
 }
 
@@ -83,14 +84,20 @@ dialog {
 }
 
 dialog article {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0;
   padding: 0;
-  width: 30rem;
-  height: 30rem;
+  width: 80rem;
+}
+
+dialog form {
+  margin: 2rem;
+}
+
+dialog form > * {
+  width: 100%;
+}
+
+.dialog-header {
+  display: flex;
 }
 
 .dlg-button {
@@ -98,22 +105,42 @@ dialog article {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: .5em !important;
-  padding: .5em !important;
+  margin: .5rem !important;
+  padding: .5rem !important;
 }
 
 .dlg-button:hover {
   border: 1px solid #e8e9e9 !important;
 }
 
-header, footer {
+dialog h3 {
+  color: #e8e9e9;
+  margin: .5rem;
+  margin-right: 0;
+  padding: 0 0 0 .5rem;
+}
+
+dialog header, dialog footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   width: 100%;
   margin: 0 !important;
   padding: 0 !important;
-  background-color: var(--card-background-color-2) !important;
+  background-color: var(--card-background-color) !important;
+}
+
+dialog header {
+  border-bottom: var(--divider);
+  justify-content: space-between;
+}
+
+dialog footer {
+  border-top: var(--divider);
+  justify-content: flex-end;
+}
+
+textarea {
+  resize: none;
 }
 
 .fc .fc-button-primary {
@@ -308,7 +335,7 @@ aside {
   bottom: 0;
   width: 12rem;
   padding: 1rem;
-  border-right: 2px solid rgba(255,255,255,0.15);
+  border-right: var(--divider);
   overflow-x: hidden;
   overflow-y: auto;
   background-color: var(--bg-color);

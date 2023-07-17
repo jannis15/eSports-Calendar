@@ -116,9 +116,18 @@ function getSRGBValue(color) {
   return sRGBValue;
 }
 
-function formatDateDDMMYYYY(dateStr) {
-  const [datePart] = dateStr.split(' ');
-  const [year, month, day] = datePart.split('-');
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-  return `${day}.${month}.${year}`;
+function formatTime(dateStr) {
+  const date = new Date(dateStr);
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
 }
