@@ -9,7 +9,7 @@ import db_models
 from db_handler import DBHandler, get_db
 from db_session import engine
 from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema,\
-    OrgCalendarSchema
+    OrgCalendarSchema, PostOrgCalendarSchema
 from utils import hash_password, verify_password
 
 app = FastAPI()
@@ -61,7 +61,7 @@ async def get_calendar_detail(org_id, request: Request, token: str = Cookie(None
 
 
 @app.post('/org/{org_id}/calendar')
-async def post_calendar_details(org_id, calendar_details: OrgCalendarSchema, token: str = Cookie(None),
+async def post_calendar_details(org_id, calendar_details: PostOrgCalendarSchema, token: str = Cookie(None),
                                 db: DBSession = Depends(get_db)):
     return {}
 

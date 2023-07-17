@@ -1,5 +1,5 @@
 [data-theme="dark"] {
-  --primary: #cc343e;
+  --primary: rgb(204, 52, 62);
   --primary-hover: #f53a4c;
   --primary-active: #81212b;
   --primary-focus: rgba(204, 52, 62, 0.25);
@@ -78,6 +78,10 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* FullCalendar */
+
+.allowed-resource {
+  background-color: rgba(255, 255, 255, 0.05);
+}
 
 dialog {
   background-color: rgba(23, 22, 22, 0.3);

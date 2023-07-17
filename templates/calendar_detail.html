@@ -22,219 +22,247 @@
         const calendarEl = document.getElementById('calendar');
 
         const calendar = new FullCalendar.Calendar(calendarEl, {
-            schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-            locale: 'de',
-            resourceAreaWidth: '9em',
-            resourceOrder: 'title,id',
-            allDayMaintainDuration: true,
-            initialView: 'resourceTimelineDay',
-            nowIndicator: true,
-            contentHeight: "auto",
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                end: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
-            },
-            navLinks: false, // can click day/week names to navigate views
-            editable: true,
-            selectable: true,
-            selectMirror: true,
-            eventColor: '#81212b',
-            resourceAreaHeaderContent: 'Teams',
-            dayMaxEvents: false, // allow "more" link when too many events
-            resourceLabelContent: function(arg) {
-                let iconUrl = '';
-                if (arg.resource.id.startsWith('team')) {
-                    iconUrl = "{{ url_for('static', path='img/users-16-2.svg') }}";
-                } else {
-                    iconUrl = "{{ url_for('static', path='img/user-16-2.svg') }}";
-                }
-                return { html: '<img src="'+iconUrl+'" style="margin-left: .25em; margin-right: .5em">' + arg.resource.title };
-            },
-            select: (info) => {
-                if (info.resource.eventAllow(info, info)) {
-                  const memberId = info.resource.id.split('team')[0].substring(6);
-                  resourceIds = [info.resource._resource.id];
+          schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+          locale: 'de',
+          resourceAreaWidth: '9em',
+          resourceOrder: 'title,id',
+          allDayMaintainDuration: true,
+          initialView: 'resourceTimelineDay',
+          nowIndicator: true,
+          contentHeight: "auto",
+          headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              end: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
+          },
+          navLinks: false, // can click day/week names to navigate views
+          editable: true,
+          selectable: true,
+          selectMirror: true,
+          eventColor: '#81212b',
+          resourceLabelDidMount: (arg) => {
+            const resource = arg.resource;
+            const resourceLabel = arg.el;
+            if (resource.eventAllow(null, null)) {
+              resourceLabel.classList.add('allowed-resource'); 
+            };
+          },
+          resourceAreaHeaderContent: 'Teams',
+          dayMaxEvents: false, // allow "more" link when too many events
+          resourceLabelContent: function(arg) {
+              let iconUrl = '';
+              if (arg.resource.id.startsWith('team')) {
+                  iconUrl = "{{ url_for('static', path='img/users-16-2.svg') }}";
+              } else {
+                  iconUrl = "{{ url_for('static', path='img/user-16-2.svg') }}";
+              }
+              return { html: '<img src="'+iconUrl+'" style="margin-left: .25em; margin-right: .5em">' + arg.resource.title };
+          },
+          select: (info) => {
+              if (info.resource.eventAllow(info, info)) {
+                const memberId = info.resource.id.split('team')[0].substring(6);
+                resourceIds = [info.resource._resource.id];
 
-                  if (info.resource.id.startsWith('member')) {
-                    const userId = info.resource.id.slice(6);
-                    const userResources = calendar.getResources().filter(resource => resource.id.startsWith(`member${memberId}team`));
-                    
-                    resourceIds = userResources.map((userResource) => { return userResource.id; });
-                  };
-
-                  let eventData = {
-                    id: '',
-                    title: 'Termin',
-                    start: info.startStr,
-
-                    resourceIds: resourceIds,
-                    end: info.endStr,
-                    resizable: true,
-                    extendedProps: {priority: currentEventPriority, memo: ''},
-                    color: currentEventPriorityColor,
-                    textColor: getContrastColor(currentEventPriorityColor),
-                  };
-                    
-                    calendar.addEvent(eventData);
-
-                }
-                calendar.unselect();
-            },
-            eventClick: (info) => {
-                info.jsEvent.preventDefault();
-                const dlg = document.createElement('dialog');
-                dlg.setAttribute('id', 'dlg');
-                dlg.innerHTML = '<article> <header>' +
-                  '<div class="dialog-header">' +
-                    '<h3> Termin bearbeiten </h3>' +
-                    '<a href="#" id="delete-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/trash-2-24-2.svg") }} alt=""></a>' +
-                  '</div>' +
-                  '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/x-24-2.svg") }} alt=""></a>' +
-                  '</header> <form>' +
-
-                  '<div class="grid">' +
-                    '<div>' +
-                      '<label for="dlg-title">Titel</label>' +
-                      '<input type="text" id="dlg-title" placeholder="Termin" value="'+info.event.title+'" required>' +
-                      '<label for="dlg-select-priority">Priorität</label>' +
-                      '<select id="dlg-select-priority">' +
-                        '<option value="'+EventPriority.Standard+'">Standard</option>' +
-                        '<option value="'+EventPriority.NoTime+'">Keine Zeit</option>' +
-                        '<option value="'+EventPriority.Uncertain+'">Unsicher</option>' +
-                        '<option value="'+EventPriority.Certain+'">Sicher</option>' +
-                      '</select>' +
-                    '</div>' + 
-                    '<div>' +
-                      '<label for="dlg-title">Notiz</label>' +
-                      '<textarea id="dlg-memo" rows="5">'+info.event.extendedProps.memo+'</textarea>' +
-                    '</div>' + 
-                  '</div>' +
+                if (info.resource.id.startsWith('member')) {
+                  const userId = info.resource.id.slice(6);
+                  const userResources = calendar.getResources().filter(resource => resource.id.startsWith(`member${memberId}team`));
                   
-                  '<label>Startpunkt</label>' +
-                    '<div class="grid">' +
-                        '<input type="date" id="dlg-start-date" value="'+formatDate(info.event.startStr)+'" required>' +
-                        '<input type="time" id="dlg-start-time" value="'+formatTime(info.event.startStr)+'" required>' +
-                    '</div>' +
+                  resourceIds = userResources.map((userResource) => { return userResource.id; });
+                };
 
-                  '<label>Endpunkt</label>' +
-                    '<div class="grid">' +
-                        '<input type="date" id="dlg-end-date" value="'+formatDate(info.event.endStr)+'" required>' +
-                        '<input type="time" id="dlg-end-time" value="'+formatTime(info.event.endStr)+'" required>' +
-                    '</div>' +
+                let eventData = {
+                  id: '',
+                  title: 'Termin',
+                  start: info.startStr,
+                  end: info.endStr,
+                  resourceIds: resourceIds,
+                  resizable: true,
+                  extendedProps: {priority: currentEventPriority, memo: ''},
+                  color: currentEventPriorityColor,
+                  textColor: getContrastColor(currentEventPriorityColor),
+                };
+                  
+                calendar.addEvent(eventData);
 
-                  '</form> <footer>' +
-                  '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/check-24-2.svg") }} alt=""></a>' +
-                  '</footer> </article>';
-                document.body.appendChild(dlg);
+              }
+              calendar.unselect();
+          },
+          eventClick: (info) => {
+            info.jsEvent.preventDefault();
+            const dlg = document.createElement('dialog');
+            dlg.setAttribute('id', 'dlg');
+            dlg.innerHTML = '<article> <header>' +
+              '<div class="dialog-header">' +
+                '<h3> Termin bearbeiten </h3>' +
+                '<a href="#" id="delete-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/trash-2-24-2.svg") }} alt=""></a>' +
+              '</div>' +
+              '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/x-24-2.svg") }} alt=""></a>' +
+              '</header> <form>' +
 
-                const dropdown = document.getElementById('dlg-select-priority');
-                for (let i = 0; i < dropdown.options.length; i++) {
-                  if (dropdown.options[i].value === info.event.extendedProps.priority) {
-                    dropdown.options[i].selected = true;
-                    break;
-                  }
-                }
+              '<div class="grid">' +
+                '<div>' +
+                  '<label for="dlg-title">Titel</label>' +
+                  '<input type="text" id="dlg-title" placeholder="Termin" value="'+info.event.title+'" required>' +
+                  '<label for="dlg-select-priority">Priorität</label>' +
+                  '<select id="dlg-select-priority">' +
+                    '<option value="'+EventPriority.Standard+'">Standard</option>' +
+                    '<option value="'+EventPriority.NoTime+'">Keine Zeit</option>' +
+                    '<option value="'+EventPriority.Uncertain+'">Unsicher</option>' +
+                    '<option value="'+EventPriority.Certain+'">Sicher</option>' +
+                  '</select>' +
+                '</div>' + 
+                '<div>' +
+                  '<label for="dlg-title">Notiz</label>' +
+                  '<textarea id="dlg-memo" rows="5">'+info.event.extendedProps.memo+'</textarea>' +
+                '</div>' + 
+              '</div>' +
+              
+              '<label>Startpunkt</label>' +
+                '<div class="grid">' +
+                    '<input type="date" id="dlg-start-date" value="'+formatDate(info.event.startStr)+'" required>' +
+                    '<input type="time" id="dlg-start-time" value="'+formatTime(info.event.startStr)+'" required>' +
+                '</div>' +
+
+              '<label>Endpunkt</label>' +
+                '<div class="grid">' +
+                    '<input type="date" id="dlg-end-date" value="'+formatDate(info.event.endStr)+'" required>' +
+                    '<input type="time" id="dlg-end-time" value="'+formatTime(info.event.endStr)+'" required>' +
+                '</div>' +
+
+              '</form> <footer>' +
+              '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/check-24-2.svg") }} alt=""></a>' +
+              '</footer> </article>';
+            document.body.appendChild(dlg);
+
+            const dropdown = document.getElementById('dlg-select-priority');
+            for (let i = 0; i < dropdown.options.length; i++) {
+              if (dropdown.options[i].value === info.event.extendedProps.priority) {
+                dropdown.options[i].selected = true;
+                break;
+              }
+            }
+            
+            function closeDlg() {
+              const dlg = document.getElementById("dlg");
+              dlg.remove();
+            }
+
+            const closeBtn = document.getElementById("close-dlg-btn");
+            closeBtn.addEventListener("click", (event) => {
+              event.preventDefault();
+              closeDlg();
+            });
+
+            const deleteBtn = document.getElementById("delete-dlg-btn");
+            deleteBtn.addEventListener("click", (event) => {
+              event.preventDefault();
+              info.event.remove();
+              closeDlg();
+            });
+
+            const checkBtn = document.getElementById("check-dlg-btn");
+            checkBtn.addEventListener("click", (event) => {
+              function confirmDlg(info) {
+                const title = document.getElementById("dlg-title");
+                const memo = document.getElementById("dlg-memo");
+                const startDate = document.getElementById("dlg-start-date");
+                const startTime = document.getElementById("dlg-start-time");
+                const endDate = document.getElementById("dlg-end-date");
+                const endTime = document.getElementById("dlg-end-time");
+                const selectPriority = document.getElementById("dlg-select-priority");
+                const eventPriorityColor = GetEventPriorityColor(selectPriority.value);
+
+                info.event.setProp('title', title.value);
+                info.event.setExtendedProp('memo', memo.value);
+                info.event.setExtendedProp('priority', selectPriority.value);
+                info.event.setProp('backgroundColor',eventPriorityColor);
+                info.event.setProp('borderColor', eventPriorityColor);
+                info.event.setProp('textColor', getContrastColor(eventPriorityColor));
+
+                const startStr = startDate.value + "T" + startTime.value;
+                const endStr = endDate.value + "T" + endTime.value;
+
+                info.event.setStart(startStr);
+                info.event.setEnd(endStr);
                 
-                function closeDlg() {
-                  const dlg = document.getElementById("dlg");
-                  dlg.remove();
-                }
+                closeDlg();
+              }
+                event.preventDefault();
+                confirmDlg(info);
+            });
 
-                const closeBtn = document.getElementById("close-dlg-btn");
-                closeBtn.addEventListener("click", (event) => {
-                  event.preventDefault();
-                  closeDlg();
-                });
+            function handleEscKeyPress(event) {
+              if (event.key === 'Escape') {
+                closeDlg();
+              }
+            }
 
-                const deleteBtn = document.getElementById("delete-dlg-btn");
-                deleteBtn.addEventListener("click", (event) => {
-                  event.preventDefault();
-                  info.event.remove();
-                  closeDlg();
-                });
+            document.addEventListener('keydown', handleEscKeyPress);
 
-                const checkBtn = document.getElementById("check-dlg-btn");
-                checkBtn.addEventListener("click", (event) => {
-                  function confirmDlg(info) {
-                    const title = document.getElementById("dlg-title");
-                    const memo = document.getElementById("dlg-memo");
-                    const startDate = document.getElementById("dlg-start-date");
-                    const startTime = document.getElementById("dlg-start-time");
-                    const endDate = document.getElementById("dlg-end-date");
-                    const endTime = document.getElementById("dlg-end-time");
-                    const selectPriority = document.getElementById("dlg-select-priority");
-                    const eventPriorityColor = GetEventPriorityColor(selectPriority.value);
-
-                    info.event.setProp('title', title.value);
-                    info.event.setExtendedProp('memo', memo.value);
-                    info.event.setExtendedProp('priority', selectPriority.value);
-                    info.event.setProp('backgroundColor',eventPriorityColor);
-                    info.event.setProp('borderColor', eventPriorityColor);
-                    info.event.setProp('textColor', getContrastColor(eventPriorityColor));
-
-                    const startStr = startDate.value + "T" + startTime.value;
-                    const endStr = endDate.value + "T" + endTime.value;
-
-                    info.event.setStart(startStr);
-                    info.event.setEnd(endStr);
-                    
-                    closeDlg();
-                  }
-                    event.preventDefault();
-                    confirmDlg(info);
-                });
-
-                function handleEscKeyPress(event) {
-                  if (event.key === 'Escape') {
-                    closeDlg();
-                  }
-                }
-
-                document.addEventListener('keydown', handleEscKeyPress);
-
-                dlg.open = true;
-                document.getElementById("dlg-title").focus();
-                document.getElementById("dlg-title").select();
-            },
+            dlg.open = true;
+            document.getElementById("dlg-title").focus();
+            document.getElementById("dlg-title").select();
+          },
         });
 
+        function formatBackendDatetime(backendDatetime) {
+          const date = new Date(backendDatetime);
+          const formattedDate = date.toISOString();
+          return formattedDate;
+        }
+        
+        let eventPriorityColor = '';
         {% for team in calendar.teams %}
+
           calendar.addResource({
             id: 'team{{ team.team_id }}',
             title: '{{ team.team_name }}',
             eventAllow: (dropInfo, draggedEvent) => {return '{{ user_id }}' === '{{ team.creator_id }}'; },
           });
+
+          
           {% for event in team.events %}
+            eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
             calendar.addEvent({
-                    id: event.id,
-                    title: event.title,
-                    start: event.start_point,
-                    resourceId: 'team{{ team.id }}',
-                    end: event.end_point,
-                    resizable: true,
-                    extendedProps: {priority: event.event_priority, memo: event.memo},
+              id: '{{ event.id }}',
+              resourceId: 'team{{ team.team_id }}',
+              title: '{{ event.title }}',
+              start: formatBackendDatetime('{{ event.start_point }}'),
+              end: formatBackendDatetime('{{ event.end_point }}'),
+              resizable: true,
+              backgroundColor: eventPriorityColor,
+              borderColor: eventPriorityColor,
+              textColor: getContrastColor(eventPriorityColor),
+              extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
             });
           {% endfor %}
+
           {% for member in team.members %}
-          calendar.addResource({
-            id: 'member{{ member.user_id }}team{{ team.team_id }}',
-            parentId: 'team{{ team.team_id }}',
-            title: '{{ member.username }}',
-            eventAllow: (dropInfo, draggedEvent) => { return '{{ user_id }}' === '{{ member.user_id }}'; },
-          });
-          {% for event in member.events %}
-            calendar.addEvent({
-                    id: event.id,
-                    resourceId: 'member{{ member.id }}',
-                    title: event.title,
-                    start: event.start_point,
-                    end: event.end_point,
-                    resizable: true,
-                    extendedProps: {priority: event.event_priority, memo: event.memo},
+            calendar.addResource({
+              id: 'member{{ member.user_id }}team{{ team.team_id }}',
+              parentId: 'team{{ team.team_id }}',
+              title: '{{ member.username }}',
+              eventAllow: (dropInfo, draggedEvent) => { return '{{ user_id }}' === '{{ member.user_id }}'; },
             });
+
+            {% for event in team.events %}
+              eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
+              calendar.addEvent({
+                id: '{{ event.id }}',
+                resourceId: 'member{{ member.user_id }}team{{ team.team_id }}',
+                title: '{{ event.title }}',
+                start: formatBackendDatetime('{{ event.start_point }}'),
+                end: formatBackendDatetime('{{ event.end_point }}'),
+                resizable: true,
+                backgroundColor: eventPriorityColor,
+                borderColor: eventPriorityColor,
+                textColor: getContrastColor(eventPriorityColor),
+                extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
+              });
             {% endfor %}
+
           {% endfor %}
+
         {% endfor %}
 
         const saveBtn = document.getElementById("calendar-save-btn");
@@ -253,38 +281,60 @@
             })
             return jsonEvents;
           }
-        
-          function membersToJSON(memberResources) {
-            return memberResources.map((memberResource) => {
-              return {
-                user_id: memberResource.id,
-                username: memberResource.title,
-                events: eventsToJSON(memberResource.getEvents()),
+
+          function getAllowedTeamResources() {
+            var resources = calendar.getTopLevelResources();
+            var allowedResources = [];
+            for (var i = 0; i < resources.length; i++) {
+              var resource = resources[i];
+
+              if (resource.eventAllow(null, null)) {
+                allowedResources.push(resource);
               }
-            });
+            }
+            return allowedResources;
           }
-    
+
+          function getResourceByUserId(user_id) {
+            const resources = calendar.getResources();
+            for (var i = 0; i < resources.length; i++) {
+              const resource = resources[i];
+              const resourceId = resource.id;
+              
+              const match = resourceId.match(/member.*team/);
+              if (match && resourceId.includes(user_id)) {
+                return resource; 
+              }
+            }
+            return null; 
+          }
+
           clickEvent.preventDefault();
-          teamResources = calendar.getTopLevelResources();
+          memberResource = getResourceByUserId('{{ user_id }}');
+          teamResources = getAllowedTeamResources();
     
+          memberJSON = {};
+          if (memberResource != null) {
+            memberJSON = {
+              user_id: memberResource.id,
+              events: eventsToJSON(memberResource.getEvents()),
+            }
+          }
+
           teamsJSON = teamResources.map((teamResource) => {
             return {
               team_id: teamResource.id,
-              team_name: teamResource.title,
               events: eventsToJSON(teamResource.getEvents()),
-              members: membersToJSON(teamResource.getChildren()),
             };
           });
 
-          const getOrgIdFromUrl = (url) => url.match(/org\/([^/]+)/)[1];
-          const currentUrl = window.location.href;
-          const orgId = getOrgIdFromUrl(currentUrl);
+console.log(JSON.stringify({memberEvents: memberJSON, teamsEvents: teamsJSON}));
 
           $.ajax({
-            url: '/org/'+orgId+'/calendar',
+            url: window.location.href,
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({teams: teamsJSON}),
+            data: JSON.stringify({memberEvents: memberJSON, teamsEvents: teamsJSON}),
             beforeSend: () => {StartLoading(saveBtn)},
             complete: () => {StopLoading(saveBtn)},
             success: (data) => {

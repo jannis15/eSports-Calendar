@@ -88,6 +88,11 @@ class PostTeamEventsSchema(BaseModel):
     events: List[EventSchema]
 
 
+class PostOrgCalendarSchema(BaseModel):
+    memberEvents: PostMemberEventsSchema
+    teamsEvents: List[PostTeamEventsSchema]
+
+
 class OrgCalendarSchema(BaseModel):
     teams: List[TeamEventsMembersSchema]
 
