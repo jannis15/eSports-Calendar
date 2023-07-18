@@ -358,6 +358,7 @@ class DBHandler:
             for event in unused_events:
                 db.delete(event)
             db.commit()
+            self.__event_ids_for_optimization.clear()
         return True
 
     def __update_events(self, events: List[EventSchema], event_allocation: EventAllocation, allocation_id: str,
