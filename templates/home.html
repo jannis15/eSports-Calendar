@@ -1,25 +1,22 @@
-{% extends "base_layout.html" %}
-
-{% block head %}
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
-{% endblock %}
+{% extends "home_layout.html" %}
 
 {% block body %}
 <main class="container-fluid">
-  <h1>Dashboard</h1>
-  <h2>Organisationen</h2>
-  <div class="grid">
+  <h1>Willkommen zurück, {{ username }}!</h1>
+  <section class="home-orgs">
     {% for organization in organizations %}
-      <article class="organization" id="{{organization.org_id}}">
-    <a href="/org/{{organization.org_id}}">
-        <div class="logo">
+    <article class="organization-card" id="{{organization.org_id}}">
+      <a id="calendar-anchor" href="/org/{{organization.org_id}}/calendar"><img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt=""></a>
+      <a class="organization-card-anchor" href="/org/{{organization.org_id}}">
+        <figure class="organization-card-logo">
           <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
-        </div>
-        <h3>{{ organization.org_name }}</h3>
-    </a>
-        <a href="/org/{{organization.org_id}}/calendar">Kalender</a>
+        </figure>
+        <footer>
+          <h3>{{ organization.org_name }}</h3>
+        </footer>
+      </a>
       </article>
     {% endfor %}
-  </div>
+  </section>
 </main>
 {% endblock %}

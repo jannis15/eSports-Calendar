@@ -42,6 +42,7 @@ async def get_home(request: Request, token: str = Cookie(None), db: DBSession = 
     return templates.TemplateResponse("home.html", {
         "request": request,
         "user_id": user_id,
+        "username": db_handler.get_username_by_id(user_id, db),
         "organizations": organizations,
     })
 

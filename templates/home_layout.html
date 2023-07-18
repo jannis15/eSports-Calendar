@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+  <head>
+    <title>eSports-Kalender</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='img/calendar-16-1.5.svg') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='pico.css') }}">
+    <script src="{{ url_for('static', path='jquery-3.7.0.min.js') }}"></script>
+    <script src="{{ url_for('static', path='jquery_post_lib.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
+    {% block head %}
+    {% endblock %}
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <h6>Dashboard</h6>
+      </ul>
+      <ul>
+        <li><a class="icon-button" id="logout" href="#" role="button">Abmelden</a></li>
+      </ul>
+    </nav>
+    {% block body %}
+    {% endblock %}
+  </body>
+</html>
