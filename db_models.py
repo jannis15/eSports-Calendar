@@ -74,7 +74,7 @@ class Team(Base):
     id = Column(String, primary_key=True, index=True)
     org_id = Column(String, ForeignKey("Org.id"), nullable=False)
     name = Column(String, nullable=False)
-    creator_id = Column(String, ForeignKey("User.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("User.id"))
     create_datetime = Column(DateTime, nullable=False)
     users = relationship("UserTeam", back_populates="team")
     org = relationship("Org", back_populates="teams")
@@ -86,6 +86,7 @@ class UserTeam(Base):
 
     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
     team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
+    # is_admin = Column(Boolean)
     user = relationship("User", back_populates="teams")
     team = relationship("Team", back_populates="users")
 

@@ -30,6 +30,24 @@
           initialView: 'resourceTimelineDay',
           nowIndicator: true,
           contentHeight: "auto",
+          eventDrop: (info) =>  {
+            const newResource = info.newResource;
+            if (newResource != null) { // check if resource changed
+              const isOldTeamResource = (info.oldResource.id.startsWith('team'));
+              const isNewTeamResource = (info.newResource.id.startsWith('team'));
+              const newMemberId = info.newResource.id.split('team')[0].substring(6);
+              const event = info.event;
+
+              if (!isNewTeamResource) {
+                const newResourceIds = calendar.getResources().filter(resource => resource.id.startsWith(`member${newMemberId}team`));
+                event.setResources(newResourceIds);
+
+              } else if (!isOldTeamResource) {
+                event.setResources([newResource.id]);
+              }
+            };
+
+          },
           headerToolbar: {
               left: 'prev,next today',
               center: 'title',
@@ -208,88 +226,92 @@
           },
         });
 
-        function backendDateTime(timeString) {
-          const date = new Date(timeString);
-          return date.toISOString();
-        };
-        
-        let eventPriorityColor = '';
-        {% set addedMemberResources = {} %}
-
-        {% for team in calendar.teams %}
-
-          calendar.addResource({
-            id: 'team{{ team.team_id }}',
-            title: '{{ team.team_name }}',
-            eventAllow: (dropInfo, draggedEvent) => {
-              if (draggedEvent != null) {
-                draggedEvent.durationEditable && draggedEvent.startEditable
-              };
-              return '{{ user_id }}' === '{{ team.creator_id }}' &&
-               ((draggedEvent == null) || (draggedEvent.durationEditable && draggedEvent.startEditable)); },
-          });
+        function loadDataIntoFullCalendar() {
+          function backendDateTime(timeString) {
+            const date = new Date(timeString);
+            return date.toISOString();
+          };
           
-          {% for event in team.events %}
-            eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
-            calendar.addEvent({
-              id: '{{ event.id }}',
-              resourceId: 'team{{ team.team_id }}',
-              editable: '{{ user_id }}' === '{{ team.creator_id }}',
-              title: '{{ event.title }}',
-              start: backendDateTime('{{ event.start_point }}+0'),
-              end: backendDateTime('{{ event.end_point }}+0'),
-              resizable: true,
-              backgroundColor: eventPriorityColor,
-              borderColor: eventPriorityColor,
-              textColor: getContrastColor(eventPriorityColor),
-              extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
-            });
-          {% endfor %}
-
-          {% for member in team.members %}
+          let eventPriorityColor = '';
+          {% set addedMemberResources = {} %}
+  
+          {% for team in calendar.teams %}
+  
             calendar.addResource({
-              id: 'member{{ member.user_id }}team{{ team.team_id }}',
-              parentId: 'team{{ team.team_id }}',
-              title: '{{ member.username }}',
+              id: 'team{{ team.team_id }}',
+              title: '{{ team.team_name }}',
               eventAllow: (dropInfo, draggedEvent) => {
                 if (draggedEvent != null) {
                   draggedEvent.durationEditable && draggedEvent.startEditable
                 };
                 return '{{ user_id }}' === '{{ team.creator_id }}' &&
-                ((draggedEvent == null) || (draggedEvent.durationEditable && draggedEvent.startEditable)); },
+                 ((draggedEvent == null) || (draggedEvent.durationEditable && draggedEvent.startEditable)); },
             });
-
-            {% if member.user_id in addedMemberResources %}
-              existingResource = calendar.getResourceById('{{ addedMemberResources[member.user_id] }}');
-              existingEvents = existingResource.getEvents();
-              existingEvents.map((event) => { 
-                const currentResources = event.getResources();
-                const newResources = currentResources.concat(['member{{ member.user_id }}team{{ team.team_id }}']);
-                event.setResources(newResources);
+            
+            {% for event in team.events %}
+              eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
+              calendar.addEvent({
+                id: '{{ event.id }}',
+                resourceId: 'team{{ team.team_id }}',
+                editable: '{{ user_id }}' === '{{ team.creator_id }}',
+                title: '{{ event.title }}',
+                start: backendDateTime('{{ event.start_point }}+0'),
+                end: backendDateTime('{{ event.end_point }}+0'),
+                resizable: true,
+                backgroundColor: eventPriorityColor,
+                borderColor: eventPriorityColor,
+                textColor: getContrastColor(eventPriorityColor),
+                extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
               });
-            {% else %}
-              {% for event in member.events %}
-                eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
-                calendar.addEvent({
-                  id: '{{ event.id }}',
-                  resourceId: 'member{{ member.user_id }}team{{ team.team_id }}',
-                  editable: '{{ user_id }}' === '{{ member.user_id }}',
-                  title: '{{ event.title }}',
-                  start: backendDateTime('{{ event.start_point }}+0'),
-                  end: backendDateTime('{{ event.end_point }}+0'),
-                  resizable: true,
-                  backgroundColor: eventPriorityColor,
-                  borderColor: eventPriorityColor,
-                  textColor: getContrastColor(eventPriorityColor),
-                  extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
+            {% endfor %}
+  
+            {% for member in team.members %}
+              calendar.addResource({
+                id: 'member{{ member.user_id }}team{{ team.team_id }}',
+                parentId: 'team{{ team.team_id }}',
+                title: '{{ member.username }}',
+                eventAllow: (dropInfo, draggedEvent) => {
+                  if (draggedEvent != null) {
+                    draggedEvent.durationEditable && draggedEvent.startEditable
+                  };
+                  return '{{ user_id }}' === '{{ team.creator_id }}' &&
+                  ((draggedEvent == null) || (draggedEvent.durationEditable && draggedEvent.startEditable)); },
+              });
+  
+              {% if member.user_id in addedMemberResources %}
+                existingResource = calendar.getResourceById('{{ addedMemberResources[member.user_id] }}');
+                existingEvents = existingResource.getEvents();
+                existingEvents.map((event) => { 
+                  const currentResources = event.getResources();
+                  const newResources = currentResources.concat(['member{{ member.user_id }}team{{ team.team_id }}']);
+                  event.setResources(newResources);
                 });
-                {% set _ = addedMemberResources.update({member.user_id: 'member' + member.user_id + 'team' + team.team_id}) %}
-              {% endfor %}
-            {% endif %}
-
+              {% else %}
+                {% for event in member.events %}
+                  eventPriorityColor = GetEventPriorityColor('{{ event.event_priority }}');
+                  calendar.addEvent({
+                    id: '{{ event.id }}',
+                    resourceId: 'member{{ member.user_id }}team{{ team.team_id }}',
+                    editable: '{{ user_id }}' === '{{ member.user_id }}',
+                    title: '{{ event.title }}',
+                    start: backendDateTime('{{ event.start_point }}+0'),
+                    end: backendDateTime('{{ event.end_point }}+0'),
+                    resizable: true,
+                    backgroundColor: eventPriorityColor,
+                    borderColor: eventPriorityColor,
+                    textColor: getContrastColor(eventPriorityColor),
+                    extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
+                  });
+                  {% set _ = addedMemberResources.update({member.user_id: 'member' + member.user_id + 'team' + team.team_id}) %}
+                {% endfor %}
+              {% endif %}
+  
+            {% endfor %}
+  
           {% endfor %}
+        }
 
-        {% endfor %}
+        loadDataIntoFullCalendar();
 
         const saveBtn = document.getElementById("calendar-save-btn");
         saveBtn.addEventListener("click", (clickEvent) => {
