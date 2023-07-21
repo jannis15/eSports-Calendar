@@ -172,6 +172,20 @@ async def get_team(org_id, team_id, request: Request, token: str = Cookie(None),
     })
 
 
+@app.get('/org/{org_id}/team/{team_id}/team-members')
+async def get_team(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    if not db_handler.is_user_member_of_org(db, user_id, org_id):
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+
+    team_members = db_handler.get_team_members(db, org_id, team_id)
+
+    return {
+        "user_id": user_id,
+        "team_members": team_members,
+    }
+
+
 @app.get("/login")
 async def get_login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -206,7 +220,7 @@ async def get_signup(request: Request):
 async def post_register(credentials: RegistrationCredentials, db: DBSession = Depends(get_db)):
     credentials.password = hash_password(credentials.password)
     user_id = db_handler.create_user(credentials, db)
-    db_handler.add_user_to_organization(db, user_id, '082910e16810496681f3704fe3662251')
+    db_handler.add_user_to_organization(db, user_id, '3079534e670845e7b5a129e6ddb5bd6e')
     return {
         "message": "Registration successful",
         "user_id": user_id,

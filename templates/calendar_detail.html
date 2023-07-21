@@ -241,10 +241,7 @@
               id: 'team{{ team.team_id }}',
               title: '{{ team.team_name }}',
               eventAllow: (dropInfo, draggedEvent) => {
-                if (draggedEvent != null) {
-                  draggedEvent.durationEditable && draggedEvent.startEditable
-                };
-                return '{{ user_id }}' === '{{ team.creator_id }}' &&
+                return '{{ user_id }}' === '{{ team.owner_id }}' &&
                  ((draggedEvent == null) || (draggedEvent.durationEditable && draggedEvent.startEditable)); },
             });
             
@@ -253,7 +250,7 @@
               calendar.addEvent({
                 id: '{{ event.id }}',
                 resourceId: 'team{{ team.team_id }}',
-                editable: '{{ user_id }}' === '{{ team.creator_id }}',
+                editable: '{{ user_id }}' === '{{ team.owner_id }}',
                 title: '{{ event.title }}',
                 start: backendDateTime('{{ event.start_point }}+0'),
                 end: backendDateTime('{{ event.end_point }}+0'),
@@ -266,15 +263,13 @@
             {% endfor %}
   
             {% for member in team.members %}
+            console.log('{{ user_id }} and {{ team.owner_id }}');
               calendar.addResource({
                 id: 'member{{ member.user_id }}team{{ team.team_id }}',
                 parentId: 'team{{ team.team_id }}',
                 title: '{{ member.username }}',
                 eventAllow: (dropInfo, draggedEvent) => {
-                  if (draggedEvent != null) {
-                    draggedEvent.durationEditable && draggedEvent.startEditable
-                  };
-                  return '{{ user_id }}' === '{{ team.creator_id }}' &&
+                  return '{{ user_id }}' === '{{ member.user_id }}' && '{{ user_id }}' === '{{ team.owner_id }}' &&
                   ((draggedEvent == null) || (draggedEvent.durationEditable && draggedEvent.startEditable)); },
               });
   

@@ -1,14 +1,14 @@
+function handleAjaxStart(el) {
+    el.setAttribute("aria-busy", "true");
+}
+
+function handleAjaxComplete(el) {
+    el.removeAttribute("aria-busy");
+}
+
 $(document).ready(() => {
     const url = window.location.href;
     const submitBtn = document.getElementById("submit");
-
-    function handleAjaxStart(el) {
-        el.setAttribute("aria-busy", "true");
-    }
-
-    function handleAjaxComplete(el) {
-        el.removeAttribute("aria-busy");
-    }
 
     $("#login-form").submit((event) => {
         event.preventDefault();
@@ -127,6 +127,7 @@ $(document).ready(() => {
         }
 
         // AJAX call with JQuery
+
         $.ajax({
             url: '/signup',
             method: 'POST',

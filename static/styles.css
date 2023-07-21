@@ -560,13 +560,80 @@ aside ul li {
 
 /* Team-Page */
 
-.member-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+#member-cards {
+  display: flex;
+  flex-direction: column;
   gap: 1em;
+
+  /* display: grid; */
+  /* grid-template-columns: repeat(2, 1fr); */
+  /* gap: 1em; */
 }
 
 .member-card {
+  position: relative;
+  padding: unset;
+  margin: 0;
+  background-color: unset;
+  box-shadow: unset;
+  overflow: hidden;
   padding: 1em;
-  text-align: center;
+  padding-right: 0;
+}
+
+.member-card-image {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  width: 8em;
+  height: 8em;
+  background-color: var(--card-background-color-2);
+  border-radius: 50%;
+  border: 2px solid var(--card-background-color);
+  overflow: hidden;
+}
+
+.member-card-detail {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: unset;
+  margin-left: 4em;
+  padding: 0;
+  padding-left: 4em;
+  padding-right: 0em;
+  height: 6em;
+  border-radius: .5em;
+}
+
+.member-roles {
+  display: inline-flex;
+  align-items: center;
+  gap: .25em;
+}
+
+.member-role {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25em;
+  padding: .1em 1em .1em 1em;
+  margin: 0;
+
+  border: 1px solid var(--color);
+  border-radius: 1em;
+}
+
+.change-member-role-icon {
+  border-radius: 50%;
+  background-color: var(--card-background-color-2);
+  border: 1px solid #bbc6ce;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: .1em;
+  margin: .1em;
+  height: 2em;
+  width: 2em;
 }

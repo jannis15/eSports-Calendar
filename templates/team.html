@@ -12,14 +12,13 @@
       <div class="logo-header team">
         <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
       </div>
-      <img src="" alt="">
       <div>
         <h1>{{ team_details.team_name }}</h1>
-        <h5 id="create-info">{{ team_details.creator_name }}</h>
+        <h5 id="create-info">{{ team_details.owner_name }}</h5>
       </div>
     </header>
     <div class="grid management-main-button-wrapper">
-      <button class="management-main-button" onclick="location.href='/org/{{ team_details.org_id }}/calendar'"
+      <button class="management-main-button" onclick="location.href='/org/{{ org_id }}/calendar'"
               type="button">
         <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
         <figcaption>Termin festlegen</figcaption>
@@ -32,21 +31,126 @@
       </button>
     </div>
 
-    <h2>Mitglieder</h2>
-    <div class="member-cards">
-      {% for member in team_details.members %}
-      <article class="member-card" id="{{member.user_id}}">
-        <span>{{ member.username }}</span>
-      </article>
-      {% endfor %}
+    <h2 id="members-header">Mitglieder</h2>
+    <div id="member-cards">
     </div>
   </section>
 </main>
 
 <script>
-  createDateTimeStr = formatDateDDMMYYYY("{{ team_details.create_datetime }}");
+  const memberCardsEl = document.getElementById('member-cards');
+  const membersHeaderEl = document.getElementById('members-header'); 
+
+  const TeamRole = {
+    OWNER: 'Eigentümer',
+    ADMIN: 'Admin',
+    STANDARD: 'Standard',
+  };
+
+  function updateMembers(currentUserId, teamMembers) {
+    const currentMemberRole = determineRole(findMemberByUserId(teamMembers.members, currentUserId), teamMembers.owner_id);
+    memberCardsEl.innerHTML = '';
+    teamMembers.members.forEach((member) => {
+      const memberRole = determineRole(member, teamMembers.owner_id);
+      let newHTML = 
+        '<article class="member-card" id="'+member.user_id+'">'+
+          '<div class="member-card-image">'+
+            '<img src="{{ url_for("static", path="img/kronic.jpg") }}" alt="">'+
+          '</div>'+
+          '<article class="member-card-detail">'+
+            '<h3>'+member.username+'</h3>'+
+            '<div class="member-roles">'+
+              '<div class="member-role">'+
+                '<span>'+memberRole+'</span>'+
+              '</div>';
+      if ((currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) && (currentUserId != member.user_id)) {
+        if (memberRole === TeamRole.ADMIN) {
+          newHTML += 
+            '<a class="change-member-role-icon" href="#">'+
+              '<img onClick="removeAdmin('+ member.user_id +')" src="{{ url_for("static", path="img/chevrons-down-16-2.svg") }}" alt="X">'+
+            '</a>';
+        } else if (memberRole === TeamRole.STANDARD) {
+          newHTML += 
+            '<a class="change-member-role-icon" href="#">'+
+              '<img src="{{ url_for("static", path="img/chevrons-up-16-2.svg") }}" alt="X">'+
+            '</a>';
+        }
+      }
+      newHTML += 
+            '</div>'+
+          '</article>'+
+        '</article>';
+      memberCardsEl.innerHTML += newHTML;
+    });
+  }
+
+  function addAdmin(user_id) {
+    alert('moin');
+    $.ajax({
+      url: window.location.href + '/team-members',
+      method: 'GET',
+      beforeSend: () => {handleAjaxStart(membersHeaderEl)},
+      complete: () => {handleAjaxComplete(membersHeaderEl)},
+      success: (data, response) => {
+        updateMembers(data.user_id, data.team_members);
+      },
+      error: (xhr) => {
+        alert(xhr.responseText);
+      }
+    });
+  }
+
+  function removeAdmin(user_id) {
+    $.ajax({
+      url: window.location.href + '/team-members',
+      method: 'GET',
+      beforeSend: () => {handleAjaxStart(membersHeaderEl)},
+      complete: () => {handleAjaxComplete(membersHeaderEl)},
+      success: (data, response) => {
+        updateMembers(data.user_id, data.team_members);
+      },
+      error: (xhr) => {
+        alert(xhr.responseText);
+      }
+    });
+  }
+
+  function determineRole(member, owner_id) {
+    if (member == null) { return TeamRole.STANDARD };
+    if (member.user_id === owner_id) {
+      return TeamRole.OWNER;
+    } else if (member.is_admin) {
+      return TeamRole.ADMIN;
+    } else {
+      return TeamRole.STANDARD;
+    }
+  }
+
+  function findMemberByUserId(members, userId) {
+    return members.find(member => member.user_id === userId);
+  }
+
+  function getMembers() {
+    $.ajax({
+      url: window.location.href + '/team-members',
+      method: 'GET',
+      beforeSend: () => {handleAjaxStart(membersHeaderEl)},
+      complete: () => {handleAjaxComplete(membersHeaderEl)},
+      success: (data, response) => {
+        updateMembers(data.user_id, data.team_members);
+      },
+      error: (xhr) => {
+        alert(xhr.responseText);
+      }
+    });
+  };
+
+  $(document).ready(() => { 
+    getMembers();
+  });
+
+  createDateTimeStr = formatDateDDMMYYYY("{{ team_details.owner_datetime }}");
   const createDatetimeElement = document.getElementById("create-info");
   createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
-
 </script>
 {% endblock %}

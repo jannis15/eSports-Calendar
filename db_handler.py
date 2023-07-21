@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import null
 from db_session import SessionLocal
 from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema, OrganizationDetailsSchema, \
     MemberSchema, TeamSchema, TeamDetailsSchema, MemberEventsSchema, TeamEventsMembersSchema, EventSchema, \
-    OrgCalendarSchema
+    OrgCalendarSchema, TeamDetailsMemberSchema
 from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent, EventPriority
 import uuid
 from datetime import datetime, timezone
@@ -56,8 +56,8 @@ class DBHandler:
         team_ids = [team.id for team in org.teams]
         return team_ids
 
-    def __is_creator(self, user_id: str, creator_id: str) -> bool:
-        return user_id == creator_id
+    def __is_owner(self, user_id: str, owner_id: str) -> bool:
+        return user_id == owner_id
 
     def is_user_member_of_org(self, db: DBSession, user_id: str, org_id: str) -> bool:
         user_org = db.query(UserOrg).filter_by(user_id=user_id, org_id=org_id).first()
@@ -91,6 +91,7 @@ class DBHandler:
             id=self.__get_unique_uuid(db, User),
             username=credentials.username,
             password=credentials.password,
+            registration_date=datetime.now(timezone.utc)
         )
         db.add(new_user)
         try:
@@ -105,8 +106,8 @@ class DBHandler:
         new_org = Org(
             id=self.__get_unique_uuid(db, Org),
             name=organization_name,
-            creator_id=user_id,
-            create_datetime=current_time,
+            owner_id=user_id,
+            owner_datetime=current_time,
         )
         db.add(new_org)
 
@@ -132,8 +133,8 @@ class DBHandler:
         if org is None:
             raise HTTPException(status_code=404, detail='Organization not found.')
 
-        if not self.__is_creator(user_id, org.creator_id):
-            raise HTTPException(status_code=403, detail='Only the organization creator can delete the organization.')
+        if not self.__is_owner(user_id, org.owner_id):
+            raise HTTPException(status_code=403, detail='Only the organization owner can delete the organization.')
 
         try:
             db.delete(org)
@@ -150,12 +151,12 @@ class DBHandler:
         if org is None:
             raise HTTPException(status_code=404, detail='Organization not found.')
 
-        if not self.__is_creator(session_user_id, org.creator_id) and session_user_id != user_id:
-            raise HTTPException(status_code=403, detail='Only the organization creator or the user themselves can '
+        if not self.__is_owner(session_user_id, org.owner_id) and session_user_id != user_id:
+            raise HTTPException(status_code=403, detail='Only the organization owner or the user themselves can '
                                                         'delete the user.')
 
-        if self.__is_creator(user_id, org.creator_id):
-            raise HTTPException(status_code=403, detail='The organization creator cannot be deleted.')
+        if self.__is_owner(user_id, org.owner_id):
+            raise HTTPException(status_code=403, detail='The organization owner cannot be deleted.')
 
         try:
             user_org = db.query(UserOrg).filter_by(user_id=user_id, org_id=org_id).first()
@@ -175,15 +176,15 @@ class DBHandler:
                 id=self.__get_unique_uuid(db, Team),
                 org_id=org_id,
                 name=team_name,
-                creator_id=user_id,
-                create_datetime=current_time,
+                owner_id=user_id,
+                owner_datetime=current_time,
             )
             db.add(new_team)
 
             try:
                 db.commit()
 
-                new_user_team = UserTeam(user_id=user_id, team_id=new_team.id)
+                new_user_team = UserTeam(user_id=user_id, team_id=new_team.id, is_admin=True)
                 db.add(new_user_team)
                 db.commit()
 
@@ -202,8 +203,8 @@ class DBHandler:
         if team is None:
             raise HTTPException(status_code=404, detail='Team not found.')
 
-        if not self.__is_creator(user_id, team.creator_id):
-            raise HTTPException(status_code=403, detail='Only the team creator can delete the team.')
+        if not self.__is_owner(user_id, team.owner_id):
+            raise HTTPException(status_code=403, detail='Only the team owner can delete the team.')
 
         try:
             db.delete(team)
@@ -218,14 +219,14 @@ class DBHandler:
         if team is None:
             raise HTTPException(status_code=404, detail='Team not found.')
 
-        if not self.__is_creator(session_user_id, team.creator_id) and session_user_id != user_id:
-            raise HTTPException(status_code=403, detail='Only the team creator can add others to the team.')
+        if not self.__is_owner(session_user_id, team.owner_id) and session_user_id != user_id:
+            raise HTTPException(status_code=403, detail='Only the team owner can add others to the team.')
 
         if self.is_user_member_of_team(db, user_id, team_id):
             raise HTTPException(status_code=409, detail='User already exists in team.')
 
         try:
-            new_user_team = UserTeam(user_id=user_id, team_id=team_id)
+            new_user_team = UserTeam(user_id=user_id, team_id=team_id, is_admin=False)
             db.add(new_user_team)
             db.commit()
 
@@ -239,11 +240,11 @@ class DBHandler:
         if team is None:
             raise HTTPException(status_code=404, detail='Team not found.')
 
-        if not self.__is_creator(session_user_id, team.creator_id) and session_user_id != user_id:
-            raise HTTPException(status_code=403, detail='Only the team creator can delete others from the team')
+        if not self.__is_owner(session_user_id, team.owner_id) and session_user_id != user_id:
+            raise HTTPException(status_code=403, detail='Only the team owner can delete others from the team')
 
-        if self.__is_creator(user_id, team.creator_id):
-            raise HTTPException(status_code=403, detail='The team creator cannot be deleted from the team.')
+        if self.__is_owner(user_id, team.owner_id):
+            raise HTTPException(status_code=403, detail='The team owner cannot be deleted from the team.')
 
         user_team = db.query(UserTeam).filter_by(user_id=user_id, team_id=team_id).first()
         if not user_team:
@@ -296,8 +297,8 @@ class DBHandler:
             team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
             if team is None:
                 raise HTTPException(status_code=404, detail='Team not found.')
-            if not self.__is_creator(session_user_id, team.creator_id):
-                raise HTTPException(status_code=403, detail='Only the team creator is allowed to modify events.')
+            if not self.__is_owner(session_user_id, team.owner_id):
+                raise HTTPException(status_code=403, detail='Only the team owner is allowed to modify events.')
 
             db_team_events = db.query(TeamEvent).filter(TeamEvent.team_id == team_id).all()
 
@@ -508,6 +509,7 @@ class DBHandler:
             member = MemberEventsSchema(
                 user_id=user_team.user_id,
                 username=user_team.user.username,
+                is_admin=user_team.is_admin,
                 events=self.__format_user_events_to_event_schemas(user_team.user.events),
             )
             members.append(member)
@@ -520,7 +522,7 @@ class DBHandler:
             return TeamEventsMembersSchema(
                 team_id=team_id,
                 team_name=db_team.name,
-                creator_id=db_team.creator_id,
+                owner_id=db_team.owner_id,
                 events=self.__format_team_events_to_event_schemas(db_team.events),
                 members=self.__format_members_to_member_with_events_schemas(db_team.users),
             )
@@ -543,7 +545,7 @@ class DBHandler:
         teams = [
             TeamSchema(team_id=team.id,
                        team_name=team.name,
-                       members=[MemberSchema(user_id=user.user_id, username=user.user.username)
+                       members=[MemberSchema(user_id=user.user_id, username=user.user.username, is_admin=user.is_admin)
                                 for user in team.users])
             for team in db_org.teams
         ]
@@ -558,7 +560,7 @@ class DBHandler:
             .all()
         )
 
-        teamless_members_schema = [MemberSchema(user_id=user.id, username=user.username) for user in teamless_members]
+        teamless_members_schema = [MemberSchema(user_id=user.id, username=user.username, is_admin=False) for user in teamless_members]
 
         teamless_team = TeamSchema(
             team_id="-1",
@@ -570,9 +572,9 @@ class DBHandler:
         return OrganizationDetailsSchema(
             org_id=db_org.id,
             org_name=db_org.name,
-            creator_id=db_org.creator_id,
-            creator_name=self.get_username_by_id(db_org.creator_id, db),
-            create_datetime=db_org.create_datetime,
+            owner_id=db_org.owner_id,
+            owner_name=self.get_username_by_id(db_org.owner_id, db),
+            owner_datetime=db_org.owner_datetime,
             teams=teams,
         )
 
@@ -583,18 +585,32 @@ class DBHandler:
         db_team = db.query(Team).filter_by(id=team_id).first()
 
         members = [
-            MemberSchema(user_id=user.user_id, username=user.user.username)
+            MemberSchema(user_id=user.user_id, username=user.user.username, is_admin=user.is_admin)
             for user in db_team.users
         ]
 
         return TeamDetailsSchema(
-            org_id=org_id,
             team_id=db_team.id,
             team_name=db_team.name,
+            owner_id=db_team.owner_id,
+            owner_name=self.get_username_by_id(db_team.owner_id, db),
+            owner_datetime=db_team.owner_datetime,
+        )
+
+    def get_team_members(self, db: DBSession, org_id, team_id: str) -> TeamDetailsMemberSchema:
+        if not self.team_exists_in_org(db, team_id, org_id):
+            raise HTTPException(status_code=404, detail='Team not found in organization.')
+
+        db_team = db.query(Team).filter_by(id=team_id).first()
+
+        members = [
+            MemberSchema(user_id=user.user_id, username=user.user.username, is_admin=user.is_admin)
+            for user in db_team.users
+        ]
+
+        return TeamDetailsMemberSchema(
+            owner_id=db_team.owner_id,
             members=members,
-            creator_id=db_team.creator_id,
-            creator_name=self.get_username_by_id(db_team.creator_id, db),
-            create_datetime=db_team.create_datetime,
         )
 
     def get_user_organizations(self, db: DBSession, user_id: str) -> OrganizationsSchema:

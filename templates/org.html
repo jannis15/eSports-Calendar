@@ -32,10 +32,9 @@
         <div class="logo-header org">
           <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
         </div>
-        <img src="" alt="">
         <div>
           <h1>{{ organization_details.org_name }}</h1>
-          <h5 id="create-info">{{ organization_details.creator_name }}</h>
+          <h5 id="create-info">{{ organization_details.owner_name }}</h5>
         </div>
       </header>
       <div class="grid management-main-button-wrapper">
@@ -63,7 +62,7 @@
   </main>
 
   <script>
-    createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.create_datetime }}");
+    createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.owner_datetime }}");
     const createDatetimeElement = document.getElementById("create-info");
     createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
   </script>

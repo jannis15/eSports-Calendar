@@ -25,6 +25,7 @@ class OrganizationSchema(BaseModel):
 class MemberSchema(BaseModel):
     user_id: str
     username: str
+    is_admin: bool
 
 
 class TeamSchema(BaseModel):
@@ -33,11 +34,17 @@ class TeamSchema(BaseModel):
     members: List[MemberSchema]
 
 
-class TeamDetailsSchema(TeamSchema):
-    org_id: str
-    creator_id: str
-    creator_name: str
-    create_datetime: datetime
+class TeamDetailsSchema(BaseModel):
+    team_id: str
+    team_name: str
+    owner_id: str
+    owner_name: str
+    owner_datetime: datetime
+
+
+class TeamDetailsMemberSchema(BaseModel):
+    owner_id: str
+    members: List[MemberSchema]
 
 
 class TeamCreateSchema(BaseModel):
@@ -45,9 +52,9 @@ class TeamCreateSchema(BaseModel):
 
 
 class OrganizationDetailsSchema(OrganizationSchema):
-    creator_id: str
-    creator_name: str
-    create_datetime: datetime
+    owner_id: str
+    owner_name: str
+    owner_datetime: datetime
     teams: List[TeamSchema]
 
 
@@ -67,13 +74,14 @@ class EventSchema(BaseModel):
 class MemberEventsSchema(BaseModel):
     user_id: str
     username: str
+    is_admin: bool
     events: List[EventSchema]
 
 
 class TeamEventsMembersSchema(BaseModel):
     team_id: str
     team_name: str
-    creator_id: str
+    owner_id: str
     events: List[EventSchema]
     members: List[MemberEventsSchema]
 
