@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import null
 from db_session import SessionLocal
 from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema, OrganizationDetailsSchema, \
     MemberSchema, TeamSchema, TeamDetailsSchema, MemberEventsSchema, TeamEventsMembersSchema, EventSchema, \
-    OrgCalendarSchema, TeamDetailsMemberSchema
+    OrgCalendarSchema, TeamDetailsMemberSchema, ChangeTeamRoleSchema
 from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent, EventPriority
 import uuid
 from datetime import datetime, timezone
@@ -294,11 +294,14 @@ class DBHandler:
     def update_events_for_team(self, session_user_id, org_id, team_id: str, events: List[EventSchema], db: DBSession) \
             -> bool:
         try:
+            session_user_team = db.query(UserTeam).filter_by(user_id=session_user_id, team_id=team_id).first()
             team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
             if team is None:
                 raise HTTPException(status_code=404, detail='Team not found.')
-            if not self.__is_owner(session_user_id, team.owner_id):
-                raise HTTPException(status_code=403, detail='Only the team owner is allowed to modify events.')
+            if not (self.__is_owner(session_user_id, team.owner_id) or (session_user_team is not None and
+                                                                        session_user_team.is_admin)):
+                raise HTTPException(status_code=403, detail='Only the team owner and the admins'
+                                                            ' are allowed to modify events here.')
 
             db_team_events = db.query(TeamEvent).filter(TeamEvent.team_id == team_id).all()
 
@@ -351,10 +354,10 @@ class DBHandler:
             unused_events = db.query(Event) \
                 .options(joinedload(Event.users), joinedload(Event.teams)) \
                 .filter(
-                    Event.id.in_(self.__event_ids_for_optimization),
-                    Event.users == null(),
-                    Event.teams == null()
-                ) \
+                Event.id.in_(self.__event_ids_for_optimization),
+                Event.users == null(),
+                Event.teams == null()
+            ) \
                 .all()
             for event in unused_events:
                 db.delete(event)
@@ -503,34 +506,38 @@ class DBHandler:
             events.append(user_event.event)
         return self.__format_events_to_event_schemas(events)
 
-    def __format_members_to_member_with_events_schemas(self, users: List[UserTeam]) -> List[MemberEventsSchema]:
+    def __format_members_to_member_with_events_schemas(self, session_user_id: str, users: List[UserTeam]) -> List[
+        MemberEventsSchema]:
         members = []
         for user_team in users:
             member = MemberEventsSchema(
                 user_id=user_team.user_id,
                 username=user_team.user.username,
-                is_admin=user_team.is_admin,
+                is_editable=user_team.user_id == session_user_id,
                 events=self.__format_user_events_to_event_schemas(user_team.user.events),
             )
             members.append(member)
         return members
 
-    def get_team_with_events_schema(self, team_id: str, db: DBSession) -> TeamEventsMembersSchema:
+    def get_team_with_events_schema(self, session_user_id, team_id: str, db: DBSession) -> TeamEventsMembersSchema:
         db_team = db.query(Team).filter(Team.id == team_id).first()
+        session_user_team = db.query(UserTeam).filter_by(user_id=session_user_id, team_id=team_id).first()
 
         if db_team:
             return TeamEventsMembersSchema(
                 team_id=team_id,
                 team_name=db_team.name,
-                owner_id=db_team.owner_id,
+                # owner_id=db_team.owner_id,
+                is_editable=(db_team.owner_id == session_user_id or
+                             (session_user_team is not None and session_user_team.is_admin)),
                 events=self.__format_team_events_to_event_schemas(db_team.events),
-                members=self.__format_members_to_member_with_events_schemas(db_team.users),
+                members=self.__format_members_to_member_with_events_schemas(session_user_id, db_team.users),
             )
 
-    def get_org_calendar_details(self, org_id: str, db: DBSession) -> OrgCalendarSchema:
+    def get_org_calendar_details(self, session_user_id, org_id: str, db: DBSession) -> OrgCalendarSchema:
         team_ids = self.__get_team_ids_by_org(org_id, db)
         teams = [
-            self.get_team_with_events_schema(team_id, db)
+            self.get_team_with_events_schema(session_user_id, team_id, db)
             for team_id in team_ids
         ]
         teams.sort(key=lambda team: team.team_name)
@@ -560,7 +567,8 @@ class DBHandler:
             .all()
         )
 
-        teamless_members_schema = [MemberSchema(user_id=user.id, username=user.username, is_admin=False) for user in teamless_members]
+        teamless_members_schema = [MemberSchema(user_id=user.id, username=user.username, is_admin=False) for user in
+                                   teamless_members]
 
         teamless_team = TeamSchema(
             team_id="-1",
@@ -627,3 +635,38 @@ class DBHandler:
                 organizations.append(organization)
 
         return OrganizationsSchema(organizations)
+
+    def change_team_role(self, db: DBSession, org_id, team_id, session_user_id: str, schema: ChangeTeamRoleSchema) \
+            -> bool:
+        if session_user_id == schema.user_id:
+            raise HTTPException(status_code=409, detail='You are not allowed to change your own role.')
+
+        if not self.team_exists_in_org(db, team_id, org_id):
+            raise HTTPException(status_code=404, detail='Team not found in organization.')
+
+        if not self.is_user_member_of_team(db, schema.user_id, team_id):
+            raise HTTPException(status_code=404, detail='User does not exist in the team.')
+
+        if not self.is_user_member_of_team(db, session_user_id, team_id):
+            raise HTTPException(status_code=403, detail='You are not allowed to modify roles.')
+
+        db_team = db.query(Team).filter_by(id=team_id).first()
+
+        if db_team.owner_id == schema.user_id:
+            raise HTTPException(status_code=409, detail='The role of the owner cannot be changed as of now.')
+
+        session_user_team = next((user_team for user_team in db_team.users if user_team.user_id == session_user_id),
+                                 None)
+
+        if not (db_team.owner_id == session_user_id or session_user_team.is_admin):
+            raise HTTPException(status_code=403, detail='You are not allowed to modify roles.')
+
+        user_team = next((user_team for user_team in db_team.users if user_team.user_id == schema.user_id), None)
+
+        if user_team.is_admin == schema.new_admin_state:
+            raise HTTPException(status_code=409, detail='The user already has this role.')
+
+        user_team.is_admin = schema.new_admin_state
+        db.commit()
+
+        return True

@@ -10,7 +10,7 @@ import db_models
 from db_handler import DBHandler, get_db
 from db_session import engine
 from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema,\
-    OrgCalendarSchema, PostOrgCalendarSchema
+    PostOrgCalendarSchema, ChangeTeamRoleSchema
 from utils import hash_password, verify_password
 
 app = FastAPI()
@@ -58,7 +58,7 @@ async def get_calendar_detail(org_id, request: Request, token: str = Cookie(None
         "org_id": org_id,
         "org_name": db_handler.get_org_name_by_id(db, org_id),
         "user_id": user_id,
-        "calendar": db_handler.get_org_calendar_details(org_id, db),
+        "calendar": db_handler.get_org_calendar_details(user_id, org_id, db),
     })
 
 
@@ -167,17 +167,32 @@ async def get_team(org_id, team_id, request: Request, token: str = Cookie(None),
         "request": request,
         "org_id": org_id,
         "org_name": db_handler.get_org_name_by_id(db, org_id),
+        "team_id": team_id,
         "user_id": user_id,
         "team_details": db_handler.get_team_details(db, org_id, team_id),
     })
 
 
 @app.get('/org/{org_id}/team/{team_id}/team-members')
-async def get_team(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def get_team_members(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
 
+    team_members = db_handler.get_team_members(db, org_id, team_id)
+
+    return {
+        "user_id": user_id,
+        "team_members": team_members,
+    }
+
+
+@app.post('/org/{org_id}/team/{team_id}/change-team-role')
+async def change_team_role(org_id, team_id, schema: ChangeTeamRoleSchema, token: str = Cookie(None),
+                           db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+
+    db_handler.change_team_role(db, org_id, team_id, user_id, schema)
     team_members = db_handler.get_team_members(db, org_id, team_id)
 
     return {

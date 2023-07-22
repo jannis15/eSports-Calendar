@@ -66,12 +66,12 @@
       if ((currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) && (currentUserId != member.user_id)) {
         if (memberRole === TeamRole.ADMIN) {
           newHTML += 
-            '<a class="change-member-role-icon" href="#">'+
-              '<img onClick="removeAdmin('+ member.user_id +')" src="{{ url_for("static", path="img/chevrons-down-16-2.svg") }}" alt="X">'+
+            '<a onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+              '<img src="{{ url_for("static", path="img/chevrons-down-16-2.svg") }}" alt="X">'+
             '</a>';
         } else if (memberRole === TeamRole.STANDARD) {
           newHTML += 
-            '<a class="change-member-role-icon" href="#">'+
+            '<a onClick="addAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
               '<img src="{{ url_for("static", path="img/chevrons-up-16-2.svg") }}" alt="X">'+
             '</a>';
         }
@@ -84,28 +84,23 @@
     });
   }
 
-  function addAdmin(user_id) {
-    alert('moin');
-    $.ajax({
-      url: window.location.href + '/team-members',
-      method: 'GET',
-      beforeSend: () => {handleAjaxStart(membersHeaderEl)},
-      complete: () => {handleAjaxComplete(membersHeaderEl)},
-      success: (data, response) => {
-        updateMembers(data.user_id, data.team_members);
-      },
-      error: (xhr) => {
-        alert(xhr.responseText);
-      }
-    });
+  function addAdmin(event, user_id) {
+    postRoleChange(event, user_id, true);
   }
 
-  function removeAdmin(user_id) {
+  function removeAdmin(event, user_id) {
+    postRoleChange(event, user_id, false);
+  }
+
+  function postRoleChange(event, user_id, newAdminState) {
+    event.preventDefault();
     $.ajax({
-      url: window.location.href + '/team-members',
-      method: 'GET',
-      beforeSend: () => {handleAjaxStart(membersHeaderEl)},
-      complete: () => {handleAjaxComplete(membersHeaderEl)},
+      url: '/org/' + '{{ org_id }}' + '/team/' + '{{ team_id }}/change-team-role',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: JSON.stringify({ user_id: user_id, new_admin_state: newAdminState }),
+      beforeSend: () => { handleAjaxStart(membersHeaderEl) },
+      complete: () => { handleAjaxComplete(membersHeaderEl) },
       success: (data, response) => {
         updateMembers(data.user_id, data.team_members);
       },
@@ -113,7 +108,7 @@
         alert(xhr.responseText);
       }
     });
-  }
+}
 
   function determineRole(member, owner_id) {
     if (member == null) { return TeamRole.STANDARD };
@@ -132,7 +127,7 @@
 
   function getMembers() {
     $.ajax({
-      url: window.location.href + '/team-members',
+      url: '/org/'+'{{ org_id }}'+'/team/'+'{{ team_id }}/team-members',
       method: 'GET',
       beforeSend: () => {handleAjaxStart(membersHeaderEl)},
       complete: () => {handleAjaxComplete(membersHeaderEl)},

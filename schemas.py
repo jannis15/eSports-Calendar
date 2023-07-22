@@ -74,16 +74,8 @@ class EventSchema(BaseModel):
 class MemberEventsSchema(BaseModel):
     user_id: str
     username: str
-    is_admin: bool
+    is_editable: bool
     events: List[EventSchema]
-
-
-class TeamEventsMembersSchema(BaseModel):
-    team_id: str
-    team_name: str
-    owner_id: str
-    events: List[EventSchema]
-    members: List[MemberEventsSchema]
 
 
 class PostMemberEventsSchema(BaseModel):
@@ -101,8 +93,22 @@ class PostOrgCalendarSchema(BaseModel):
     teamsEvents: List[PostTeamEventsSchema]
 
 
+class TeamEventsMembersSchema(BaseModel):
+    team_id: str
+    team_name: str
+    # owner_id: str
+    is_editable: bool
+    events: List[EventSchema]
+    members: List[MemberEventsSchema]
+
+
 class OrgCalendarSchema(BaseModel):
     teams: List[TeamEventsMembersSchema]
+
+
+class ChangeTeamRoleSchema(BaseModel):
+    user_id: str
+    new_admin_state: bool
 
 
 # class EventPrioritySchema(BaseModel):
