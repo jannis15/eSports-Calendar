@@ -467,9 +467,9 @@ aside ul li {
   overflow: hidden;
 }
 
-.logo-header.team {
+/* .logo-header.team {
   border-radius: .5em;
-}
+} */
 
 .org-logo-header img {
   display: block;
@@ -636,4 +636,57 @@ aside ul li {
   margin: .1em;
   height: 2em;
   width: 2em;
+}
+
+/* Error */
+
+.error-block {
+  position: absolute;
+  margin: auto;
+  padding: auto;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-input {
+  display: flex;
+  margin: 2.5em 2.5em 0 2.5em;
+}
+
+.copy-input > * {
+  border-radius: unset;
+  margin: 0 !important;
+  padding: 1em;
+}
+
+.copy-input > input {
+  border-top-left-radius: .5em;
+  border-bottom-left-radius: .5em;
+}
+
+.copy-input > button {
+  width: 4em;
+  background-color: var(--card-background-color-2);
+  border-top-right-radius: .5em;
+  border-bottom-right-radius: .5em;
+}
+
+.dlg-disclaimer {
+  margin: 0.5em 2.5em 2.5em 2.5em !important;
+}
+
+.dlg-main {
+  min-height: 8em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.copy-container {
+  width: 100%;
 }

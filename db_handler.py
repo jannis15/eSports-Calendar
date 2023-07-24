@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 from fastapi import HTTPException
 import sqlalchemy.exc
@@ -10,9 +10,10 @@ from db_session import SessionLocal
 from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSchema, OrganizationDetailsSchema, \
     MemberSchema, TeamSchema, TeamDetailsSchema, MemberEventsSchema, TeamEventsMembersSchema, EventSchema, \
     OrgCalendarSchema, TeamDetailsMemberSchema, ChangeTeamRoleSchema
-from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent, EventPriority
+from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent, EventPriority, \
+    TeamInvite
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from utils import add_amount_of_days
 from enum import Enum
 
@@ -670,3 +671,56 @@ class DBHandler:
         db.commit()
 
         return True
+
+    def validate_invite(self, db_invite: Type[TeamInvite]) -> bool:
+        now = datetime.utcnow()
+        valid_duration = timedelta(hours=24)
+        is_valid = db_invite.create_date_time + valid_duration >= now and not db_invite.used
+
+        return is_valid
+
+    def use_invite(self, db: Session, invite_id, session_user_id: str) -> tuple:
+        db_invite = db.query(TeamInvite).filter_by(id=invite_id).first()
+
+        if db_invite:
+            is_member_of_org = self.is_user_member_of_org(db, session_user_id, db_invite.team.org.id)
+            if not is_member_of_org:
+                raise HTTPException(status_code=403, detail='You are not a member of the org. You first have to request'
+                                                            'access to the organization itself.')
+
+            if self.is_user_member_of_team(db, session_user_id, db_invite.team.id):
+                raise HTTPException(status_code=409, detail='You are already a member of the team. The invite is still'
+                                                            'valid for others.')
+
+            is_valid_invite = self.validate_invite(db_invite)
+            if is_valid_invite:
+                db_invite.used = True
+                db.commit()
+            else:
+                raise HTTPException(status_code=410, detail='Invite is no longer valid.')
+        else:
+            raise HTTPException(status_code=404, detail='Invite does not exist.')
+
+        return db_invite.team.org.id, db_invite.team.id
+
+    def generate_invite(self, db: DBSession, org_id, team_id, session_user_id: str) -> str:
+        if not self.team_exists_in_org(db, team_id, org_id):
+            raise HTTPException(status_code=404, detail='Team not found in organization.')
+
+        if not self.is_user_member_of_team(db, session_user_id, team_id):
+            raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team.')
+
+        db_team = db.query(Team).filter_by(id=team_id).first()
+        session_user_team = next((user_team for user_team in db_team.users if user_team.user_id == session_user_id),
+                                 None)
+
+        if not (db_team.owner_id == session_user_id or session_user_team.is_admin):
+            raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team.')
+
+        new_team_invite = TeamInvite(id=self.__get_unique_uuid(db, TeamInvite),
+                                     create_date_time=datetime.now(timezone.utc),
+                                     team_id=team_id)
+
+        db.add(new_team_invite)
+        db.commit()
+        return new_team_invite.id

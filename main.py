@@ -9,7 +9,7 @@ import db_event_listener
 import db_models
 from db_handler import DBHandler, get_db
 from db_session import engine
-from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema,\
+from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema, \
     PostOrgCalendarSchema, ChangeTeamRoleSchema
 from utils import hash_password, verify_password
 
@@ -21,17 +21,18 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.exception_handler(HTTPException)
-# todo: dont really redirect with next anymore. rethinking needed
 async def exc_handle(request: Request, exc: HTTPException):
     if (request.method == 'GET') and (exc.status_code == 403):
         current_url = request.url.path
         login_url = f"/login?next={current_url}"
         return RedirectResponse(login_url)
     else:
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"detail": exc.detail},
-        )
+        error_context = {
+            "request": request,
+            "error_code": exc.status_code,
+            "detail": exc.detail,
+        }
+        return templates.TemplateResponse("error_template.html", error_context)
 
 
 @app.get("/")
@@ -146,7 +147,6 @@ async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSes
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
-
 
     return templates.TemplateResponse("org.html", {
         "request": request,
@@ -265,6 +265,24 @@ async def post_org(request: OrganizationCreateSchema, token: str = Cookie(None),
     else:
         raise HTTPException(status_code=403, detail='Only the admin can create an organization.')
 
+
+@app.get("/invite/{invite_id}")
+async def get_invite(invite_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    org_id, team_id = db_handler.use_invite(db, invite_id, user_id)
+    redirect_url = f"/org/{org_id}/team/{team_id}"
+    response = RedirectResponse(url=redirect_url)
+    return response
+
+
+@app.post('/org/{org_id}/team/{team_id}/generate-invite')
+async def generate_invite(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    invite_id = db_handler.generate_invite(db, org_id, team_id, user_id)
+
+    return {
+        "invite_id": invite_id,
+    }
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)

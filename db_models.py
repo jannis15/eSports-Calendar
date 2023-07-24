@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, ForeignKey, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from db_session import Base
@@ -80,6 +80,7 @@ class Team(Base):
     users = relationship("UserTeam", back_populates="team")
     org = relationship("Org", back_populates="teams")
     events = relationship("TeamEvent", back_populates="team")
+    invites = relationship("TeamInvite", back_populates="team")
 
 
 class UserTeam(Base):
@@ -109,3 +110,13 @@ class TeamEvent(Base):
     event_id = Column(String, ForeignKey("Event.id"), primary_key=True)
     team = relationship("Team", back_populates="events")
     event = relationship("Event", back_populates="teams")
+
+
+class TeamInvite(Base):
+    __tablename__ = "TeamInvite"
+
+    id = Column(String, primary_key=True, index=True)
+    create_date_time = Column(DateTime, nullable=False)
+    team_id = Column(String, ForeignKey("Team.id"), nullable=False)
+    used = Column(Boolean, nullable=False, default=False)
+    team = relationship("Team", back_populates="invites")
