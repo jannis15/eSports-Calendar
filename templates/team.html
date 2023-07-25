@@ -51,6 +51,11 @@
     teamMembers.members.sort((a, b) => a.username.localeCompare(b.username));
     const currentMemberRole = determineRole(findMemberByUserId(teamMembers.members, currentUserId), teamMembers.owner_id);
     memberCardsEl.innerHTML = '';
+
+    currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER
+      ? generateInviteBtnEl.removeAttribute('disabled')
+      : generateInviteBtnEl.setAttribute('disabled', '');
+
     teamMembers.members.forEach((member) => {
       const memberRole = determineRole(member, teamMembers.owner_id);
       let newHTML = 
