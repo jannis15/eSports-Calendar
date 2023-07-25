@@ -558,6 +558,8 @@ class DBHandler:
             for team in db_org.teams
         ]
         teams.sort(key=lambda team: team.team_name)
+        for team in teams:
+            team.members.sort(key=lambda member: member.username)
 
         teamless_members = (
             db.query(User)
@@ -570,6 +572,7 @@ class DBHandler:
 
         teamless_members_schema = [MemberSchema(user_id=user.id, username=user.username, is_admin=False) for user in
                                    teamless_members]
+        teamless_members_schema.sort(key=lambda member: member.username)
 
         teamless_team = TeamSchema(
             team_id="-1",
@@ -593,9 +596,11 @@ class DBHandler:
 
         db_team = db.query(Team).filter_by(id=team_id).first()
 
+        db_members = db.query(UserTeam).filter_by(team_id=team_id).join(User).order_by(User.username).all()
+
         members = [
-            MemberSchema(user_id=user.user_id, username=user.user.username, is_admin=user.is_admin)
-            for user in db_team.users
+            MemberSchema(user_id=member.user.id, username=member.user.username, is_admin=member.is_admin)
+            for member in db_members
         ]
 
         return TeamDetailsSchema(
@@ -604,6 +609,7 @@ class DBHandler:
             owner_id=db_team.owner_id,
             owner_name=self.get_username_by_id(db_team.owner_id, db),
             owner_datetime=db_team.owner_datetime,
+            members=members  # Don't forget to include the sorted members in the return value
         )
 
     def get_team_members(self, db: DBSession, org_id, team_id: str) -> TeamDetailsMemberSchema:
@@ -683,17 +689,19 @@ class DBHandler:
         db_invite = db.query(TeamInvite).filter_by(id=invite_id).first()
 
         if db_invite:
-            is_member_of_org = self.is_user_member_of_org(db, session_user_id, db_invite.team.org.id)
-            if not is_member_of_org:
-                raise HTTPException(status_code=403, detail='You are not a member of the org. You first have to request'
-                                                            'access to the organization itself.')
-
-            if self.is_user_member_of_team(db, session_user_id, db_invite.team.id):
-                raise HTTPException(status_code=409, detail='You are already a member of the team. The invite is still'
-                                                            'valid for others.')
-
             is_valid_invite = self.validate_invite(db_invite)
             if is_valid_invite:
+                is_member_of_org = self.is_user_member_of_org(db, session_user_id, db_invite.team.org.id)
+                if not is_member_of_org:
+                    raise HTTPException(status_code=403, detail='You are not a member of the org. You first have to '
+                                                                'request access to the organization itself.')
+
+                if self.is_user_member_of_team(db, session_user_id, db_invite.team.id):
+                    raise HTTPException(status_code=409, detail='You are already a member of the team. The invite '
+                                                                'is still valid for others.')
+
+                new_user_team = UserTeam(user_id=session_user_id, team_id=db_invite.team_id, is_admin=False)
+                db.add(new_user_team)
                 db_invite.used = True
                 db.commit()
             else:

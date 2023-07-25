@@ -88,7 +88,7 @@ class UserTeam(Base):
 
     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
     team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
-    is_admin = Column(Boolean)
+    is_admin = Column(Boolean, nullable=False, default=False)
     user = relationship("User", back_populates="teams")
     team = relationship("Team", back_populates="users")
 

@@ -24,7 +24,7 @@
         <figcaption>Termin festlegen</figcaption>
       </button>
 
-      <button class="management-main-button" id="generate-invite-btn" type="button">
+      <button class="management-main-button" id="generate-invite-btn" type="button" disabled>
         <img src="{{ url_for('static', path='img/user-plus-32-2.svg') }}" alt="team-logo"></img>
         <figcaption>Spieler einladen</figcaption>
       </button>
@@ -48,6 +48,7 @@
   };
 
   function updateMembers(currentUserId, teamMembers) {
+    teamMembers.members.sort((a, b) => a.username.localeCompare(b.username));
     const currentMemberRole = determineRole(findMemberByUserId(teamMembers.members, currentUserId), teamMembers.owner_id);
     memberCardsEl.innerHTML = '';
     teamMembers.members.forEach((member) => {
@@ -152,26 +153,58 @@
           '<h3> Zum Team einladen </h3>' +
           '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ url_for("static", path="img/x-24-2.svg") }}" alt=""></a>' +
         '</header>' +
-        '<div class="dlg-main" aria-busy="true">' +
-          // '<div class="copy-container">' +
-          //   '<div class="copy-input">' +
-          //     '<input type="text" id="url-input" value="'+window.location.href+'" readonly>' +
-          //     '<button class="dlg-button" id="copy-url-btn">' +
-          //       '<img src="{{ url_for("static", path="img/copy-24-2.svg") }}" alt=""></button>' +
-          //   '</div>' +
-          //   '<p class="dlg-disclaimer">Einmal-Link. 24h lang gültig.</p>' +
-          // '</div>' +
+        '<div id="dlg-main" aria-busy="true">' +
         '</div>' +
       '</article>';
       document.body.appendChild(dlg);
       dlg.open = true;
+
+      function getInviteLink() {
+        const mainContent = document.getElementById('dlg-main');
+        const loadingInviteEl = document.getElementById('loading-invite');
+        $.ajax({
+          url: '/org/'+'{{ org_id }}'+'/team/'+'{{ team_id }}/generate-invite',
+          method: 'POST',
+          complete: () => {mainContent.removeAttribute('aria-busy')},
+          success: (data) => {
+            mainContent.innerHTML =           
+            '<div class="copy-container">' +
+              '<div class="copy-input">' +
+                '<input type="text" id="url-input" value="'+window.location.hostname+'/invite/'+data.invite_id+'" readonly>' +
+                '<button class="dlg-button" id="copy-url-btn">' +
+                  '<img src="{{ url_for("static", path="img/copy-24-2.svg") }}" alt=""></button>' +
+              '</div>' +
+              '<p class="dlg-disclaimer">Einmal-Link. 24h lang gültig.</p>' +
+            '</div>';
+
+            const copyURLBtn = document.getElementById("copy-url-btn");
+            copyURLBtn.addEventListener("click", (event) => {
+              const urlInputEl = document.getElementById("url-input");
+
+              navigator.clipboard.writeText(urlInputEl.value);
+
+              copyURLBtn.setAttribute('data-tooltip', 'Kopiert!');
+              copyURLBtn.setAttribute('data-placement', 'bottom');
+
+              setTimeout(() => {
+                copyURLBtn.removeAttribute('data-tooltip');
+                copyURLBtn.removeAttribute('data-placement');
+              }, 2000);
+            });
+          },
+          error: (xhr) => {
+            alert(xhr.responseText);
+            dlg.remove();
+          }
+        });
+      };
 
       function closeDlg() {
         document.removeEventListener('keydown', handleEscKeyPress);
         const dlg = document.getElementById("dlg");
         dlg.remove();
       }
-      
+
       const closeBtn = document.getElementById("close-dlg-btn");
       closeBtn.addEventListener("click", (event) => {
         event.preventDefault();
@@ -185,20 +218,7 @@
       }
       document.addEventListener('keydown', handleEscKeyPress);
 
-      const copyURLBtn = document.getElementById("copy-url-btn");
-      copyURLBtn.addEventListener("click", (event) => {
-        const urlInputEl = document.getElementById("url-input");
-
-
-        copyURLBtn.setAttribute('data-tooltip', 'Kopiert!');
-        copyURLBtn.setAttribute('data-placement', 'bottom');
-
-        setTimeout(() => {
-          copyURLBtn.removeAttribute('data-tooltip');
-          copyURLBtn.removeAttribute('data-placement');
-        }, 2000);
-      });
-
+      getInviteLink();
     });
   });
 
