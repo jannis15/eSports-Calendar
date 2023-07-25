@@ -99,7 +99,7 @@ class DBHandler:
             db.commit()
             return new_user.id
         except sqlalchemy.exc.IntegrityError:
-            raise HTTPException(status_code=500, detail='User already exists in survey.')
+            raise HTTPException(status_code=401, detail='User already exists in survey.')
 
     def create_organization(self, user_id, organization_name: str, db: DBSession) -> str:
         current_time = datetime.now(timezone.utc)

@@ -46,9 +46,9 @@ $(document).ready(() => {
                 if (xhr.status === 401) {
                     usernameEl.setAttribute("aria-invalid", "true");
                     passwordEl.setAttribute("aria-invalid", "true");
+                } else {
+                    alert(xhr.responseText);
                 }
-                // TODO: Error Handling
-                alert(xhr.responseText);
             }
         });
     });
@@ -139,11 +139,11 @@ $(document).ready(() => {
                 window.location.href = '/login';
             },
             error: (xhr) => {
-                if (xhr.status === 409) {
+                if (xhr.status === 401) {
                     usernameEl.setAttribute("aria-invalid", "true");
-                };
-                // TODO: Error Handling
-                alert(xhr.responseText);
+                } else {
+                    alert(xhr.responseText);
+                }
             }
         });
     });
@@ -157,7 +157,6 @@ $(document).ready(() => {
                 window.location.href = '/login';
             },
             error: (xhr) => {
-                // TODO: Error Handling
                 alert(xhr.responseText);
             }
         });
@@ -181,7 +180,6 @@ $(document).ready(() => {
                 location.reload();
             },
             error: (xhr) => {
-                // TODO: Error Handling
                 alert(xhr.responseText);
             }
         });
@@ -205,7 +203,6 @@ $(document).ready(() => {
                 location.reload();
             },
             error: (xhr) => {
-                // TODO: Error Handling
                 alert(xhr.responseText);
             }
         });

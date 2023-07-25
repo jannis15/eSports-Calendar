@@ -13,7 +13,8 @@
         <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
       </div>
       <div>
-        <h1>{{ team_details.team_name }}</h1>
+        <div id="team-header-wrapper">
+        </div>
         <h5 id="create-info">{{ team_details.owner_name }}</h5>
       </div>
     </header>
@@ -21,7 +22,7 @@
       <button class="management-main-button" onclick="location.href='/org/{{ org_id }}/calendar'"
               type="button">
         <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
-        <figcaption>Termin festlegen</figcaption>
+        <figcaption>Kalender</figcaption>
       </button>
 
       <button class="management-main-button" id="generate-invite-btn" type="button" disabled>
@@ -40,6 +41,7 @@
   const generateInviteBtnEl = document.getElementById('generate-invite-btn');
   const memberCardsEl = document.getElementById('member-cards');
   const membersHeaderEl = document.getElementById('members-header'); 
+  const teamHeaderWrapperEl = document.getElementById('team-header-wrapper');
 
   const TeamRole = {
     OWNER: 'Eigentümer',
@@ -56,6 +58,22 @@
       ? generateInviteBtnEl.removeAttribute('disabled')
       : generateInviteBtnEl.setAttribute('disabled', '');
 
+    teamHeaderWrapperEl.innerHTML = '<h1>{{ team_details.team_name }}</h1>';
+
+    if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
+      teamHeaderWrapperEl.innerHTML += 
+        '<a data-tooltip="Team bearbeiten" data-placement="bottom" href="#">' +
+          '<img src="{{ url_for("static", path="img/edit-2-32-2.svg") }}" alt="">' +
+        '</a>';
+    }
+
+    if (currentMemberRole === TeamRole.OWNER) {
+      teamHeaderWrapperEl.innerHTML += 
+      '<a data-tooltip="Team löschen" data-placement="bottom" href="#">' +
+        '<img src="{{ url_for("static", path="img/trash-2-32-2.svg") }}" alt="">' +
+      '</a>';
+    }
+
     teamMembers.members.forEach((member) => {
       const memberRole = determineRole(member, teamMembers.owner_id);
       let newHTML = 
@@ -69,19 +87,38 @@
               '<div class="member-role">'+
                 '<span>'+memberRole+'</span>'+
               '</div>';
-      if ((currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) && (currentUserId != member.user_id)) {
-        if (memberRole === TeamRole.ADMIN) {
-          newHTML += 
-            '<a onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
-              '<img src="{{ url_for("static", path="img/chevrons-down-16-2.svg") }}" alt="X">'+
-            '</a>';
-        } else if (memberRole === TeamRole.STANDARD) {
-          newHTML += 
-            '<a onClick="addAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
-              '<img src="{{ url_for("static", path="img/chevrons-up-16-2.svg") }}" alt="X">'+
-            '</a>';
+      if (member.user_id === '{{ user_id }}') {
+        newHTML += 
+          '<div class="member-role you">'+
+            '<span>Du</span>'+
+          '</div>';
+      }
+
+      if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
+
+        if (currentUserId != member.user_id) {
+          if (memberRole === TeamRole.ADMIN) {
+            newHTML += 
+              '<a data-tooltip="Admin-Rolle entziehen" data-placement="bottom" onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+                '<img src="{{ url_for("static", path="img/chevrons-down-16-2.svg") }}" alt="">'+
+              '</a>';
+          } else if (memberRole === TeamRole.STANDARD) {
+            newHTML += 
+              '<a data-tooltip="Admin-Rolle hinzufügen" data-placement="bottom" onClick="addAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+                '<img src="{{ url_for("static", path="img/chevrons-up-16-2.svg") }}" alt="">'+
+              '</a>';
+          }
         }
       }
+
+      if (((currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) ||
+        (member.user_id === '{{ user_id }}')) && (memberRole != TeamRole.OWNER)) {
+          newHTML +=
+          '<a data-tooltip="aus Team entfernen" data-placement="bottom" onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+            '<img src="{{ url_for("static", path="img/user-minus-16-2.svg") }}" alt="">'+
+          '</a>';
+      };
+
       newHTML += 
             '</div>'+
           '</article>'+
@@ -146,6 +183,18 @@
     });
   };
 
+  function closeDlg() {
+    document.removeEventListener('keydown', handleEscKeyPress);
+    const dlg = document.getElementById("dlg");
+    dlg.remove();
+  };
+
+  function handleEscKeyPress(event) {
+    if (event.key === 'Escape') {
+      closeDlg();
+    }
+  };
+
   $(document).ready(() => { 
     getMembers();
 
@@ -204,23 +253,12 @@
         });
       };
 
-      function closeDlg() {
-        document.removeEventListener('keydown', handleEscKeyPress);
-        const dlg = document.getElementById("dlg");
-        dlg.remove();
-      }
-
       const closeBtn = document.getElementById("close-dlg-btn");
       closeBtn.addEventListener("click", (event) => {
         event.preventDefault();
         closeDlg();
       });
 
-      function handleEscKeyPress(event) {
-        if (event.key === 'Escape') {
-          closeDlg();
-        }
-      }
       document.addEventListener('keydown', handleEscKeyPress);
 
       getInviteLink();

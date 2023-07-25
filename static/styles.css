@@ -338,16 +338,34 @@ section.home-orgs > * {
   flex-shrink: 0;
 }
 
+figure.organization-card-logo {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
 article.organization-card {
   position: relative;
-  height: 24rem;
-  width: 20rem;
+  height: 20rem;
+  width: 16rem;
   padding: 0;
   margin: 1rem 0 1rem 0;
   border-radius: 1rem;
-  overflow: hidden;
   border: 2px solid transparent;
   transition: border var(--transition);
+}
+
+article.add-organization {
+  background-color: transparent;
+  border-color: var(--card-background-color-2);
+}
+
+article.add-organization > .organization-card-anchor {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
 }
 
 article.organization-card:hover {
@@ -370,6 +388,7 @@ article.organization-card:hover {
   padding: 0 1rem 0 1rem !important;
   align-items: center;
 
+  background-color: transparent !important;
   max-width: 100%;
   overflow: hidden;
   flex-grow: 0;
@@ -380,25 +399,6 @@ article.organization-card:hover {
   padding: 0;
   color: var(--main-text-color);
 }
-
-
-/* article.organization {
-  display: flex;
-  gap: 1em;
-  margin: .5em;
-  padding: .5em;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-}
-
-article.organization img {
-  width: 5rem;
-  height: 5rem;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow: .25rem .25rem .25rem #00000048;
-} */
 
 /* Management */
 
@@ -560,14 +560,17 @@ aside ul li {
 
 /* Team-Page */
 
+#team-header-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .75em;
+}
+
 #member-cards {
   display: flex;
   flex-direction: column;
   gap: 1em;
-
-  /* display: grid; */
-  /* grid-template-columns: repeat(2, 1fr); */
-  /* gap: 1em; */
 }
 
 .member-card {
@@ -576,7 +579,6 @@ aside ul li {
   margin: 0;
   background-color: unset;
   box-shadow: unset;
-  overflow: hidden;
   padding: 1em;
   padding-right: 0;
 }
@@ -623,6 +625,11 @@ aside ul li {
 
   border: 1px solid var(--color);
   border-radius: 1em;
+}
+
+.member-role.you {
+  border-color: #008450;
+  color: #008450;
 }
 
 .change-member-role-icon {
@@ -680,7 +687,6 @@ aside ul li {
 }
 
 .dlg-main {
-  min-height: 8em;
   display: flex;
   flex-direction: column;
   justify-content: center;

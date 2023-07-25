@@ -26,6 +26,11 @@ async def exc_handle(request: Request, exc: HTTPException):
         current_url = request.url.path
         login_url = f"/login?next={current_url}"
         return RedirectResponse(login_url)
+    elif exc.status_code == 401:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
     else:
         error_context = {
             "request": request,
