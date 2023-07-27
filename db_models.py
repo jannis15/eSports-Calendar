@@ -63,10 +63,11 @@ class Org(Base):
 
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    owner_id = Column(String, ForeignKey("User.id"), nullable=False)
-    owner_datetime = Column(DateTime, nullable=False)
+    owner_id = Column(String, ForeignKey("User.id"))
+    owner_datetime = Column(DateTime)
     users = relationship("UserOrg", back_populates="org")
     teams = relationship("Team", back_populates="org")
+    codes = relationship("OrgCode", back_populates="org")
 
 
 class Team(Base):
@@ -120,3 +121,13 @@ class TeamInvite(Base):
     team_id = Column(String, ForeignKey("Team.id"), nullable=False)
     used = Column(Boolean, nullable=False, default=False)
     team = relationship("Team", back_populates="invites")
+
+
+class OrgCode(Base):
+    __tablename__ = "OrgCode"
+
+    id = Column(String, primary_key=True, index=True)
+    create_date_time = Column(DateTime, nullable=False)
+    org_id = Column(String, ForeignKey("Org.id"), nullable=False)
+    valid = Column(Boolean, nullable=False, default=True)
+    org = relationship("Org", back_populates="codes")

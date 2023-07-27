@@ -26,7 +26,7 @@ async def exc_handle(request: Request, exc: HTTPException):
         current_url = request.url.path
         login_url = f"/login?next={current_url}"
         return RedirectResponse(login_url)
-    elif exc.status_code == 401:
+    elif (request.method == 'POST') or (exc.status_code == 401):
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": exc.detail},
@@ -240,7 +240,6 @@ async def get_signup(request: Request):
 async def post_register(credentials: RegistrationCredentials, db: DBSession = Depends(get_db)):
     credentials.password = hash_password(credentials.password)
     user_id = db_handler.create_user(credentials, db)
-    db_handler.add_user_to_organization(db, user_id, '3079534e670845e7b5a129e6ddb5bd6e')
     return {
         "message": "Registration successful",
         "user_id": user_id,
@@ -248,24 +247,32 @@ async def post_register(credentials: RegistrationCredentials, db: DBSession = De
 
 
 @app.get("/admin")
-async def get_org_creation(request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def get_admin_panel(request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     username = db_handler.get_username_by_id(user_id, db)
-    if username == 'admin':
+    if username == 'Admin':
         return templates.TemplateResponse("admin.html", {"request": request})
     else:
         raise HTTPException(status_code=403, detail='Only the admin can access this route.')
 
 
+@app.post("/join-org/{org_code}")
+async def join_org(org_code, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    db_handler.use_org_code(user_id, org_code, db)
+    return {
+        "message": "Organization joined successfully.",
+    }
+
 @app.post("/org-creation")
 async def post_org(request: OrganizationCreateSchema, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     username = db_handler.get_username_by_id(user_id, db)
-    if username == 'admin':
-        org_id = db_handler.create_organization(user_id, request.name, db)
+    if username == 'Admin':
+        org_code = db_handler.create_organization(request.name, db)
         return {
             "message": "Organization created successfully.",
-            "org_id": org_id,
+            "org_code": org_code,
         }
     else:
         raise HTTPException(status_code=403, detail='Only the admin can create an organization.')

@@ -8,12 +8,6 @@
 <main class="container-fluid">
   <h1>Willkommen zurück, {{ username }}!</h1>
   <section class="home-orgs">
-    <article class="organization-card add-organization">
-      <a id="add-organization-card" class="organization-card-anchor" href="#">
-        <img src="{{ url_for('static', path='img/plus-circle-64-2.svg') }}" alt="">
-        <h3>Organisation hinzufügen</h3>
-      </a>
-    </article>
     {% for organization in organizations %}
     <article class="organization-card" id="{{organization.org_id}}">
       <a data-tooltip="Kalender" data-placement="bottom" id="calendar-anchor" href="/org/{{organization.org_id}}/calendar"><img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt=""></a>
@@ -27,6 +21,12 @@
       </a>
       </article>
     {% endfor %}
+    <article class="organization-card add-organization">
+      <a id="add-organization-card" class="organization-card-anchor" href="#">
+        <img src="{{ url_for('static', path='img/plus-circle-64-2.svg') }}" alt="">
+        <h3>Organisation hinzufügen</h3>
+      </a>
+    </article>
   </section>
 </main>
 
@@ -60,6 +60,24 @@
       closeBtn.addEventListener("click", (event) => {
         event.preventDefault();
         closeDlg();
+      });
+      const sendDlgBtn = document.getElementById("send-dlg-btn");
+      sendDlgBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        const AddCodeInputEl = document.getElementById("add-code-input");
+        $.ajax({
+          url: '/join-org/'+AddCodeInputEl.value,
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          beforeSend: () => {handleAjaxStart(sendDlgBtn)},
+          complete: () => {handleAjaxComplete(sendDlgBtn)},
+          success: (response) => {
+            location.reload();
+          },
+          error: (xhr) => {
+            alert(xhr.responseText);
+          }
+        });
       });
     });
   });

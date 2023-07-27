@@ -11,7 +11,7 @@ from schemas import RegistrationCredentials, OrganizationSchema, OrganizationsSc
     MemberSchema, TeamSchema, TeamDetailsSchema, MemberEventsSchema, TeamEventsMembersSchema, EventSchema, \
     OrgCalendarSchema, TeamDetailsMemberSchema, ChangeTeamRoleSchema
 from db_models import User, Session, Org, UserOrg, Team, UserTeam, Event, UserEvent, TeamEvent, EventPriority, \
-    TeamInvite
+    TeamInvite, OrgCode
 import uuid
 from datetime import datetime, timezone, timedelta
 from utils import add_amount_of_days
@@ -101,30 +101,44 @@ class DBHandler:
         except sqlalchemy.exc.IntegrityError:
             raise HTTPException(status_code=401, detail='User already exists in survey.')
 
-    def create_organization(self, user_id, organization_name: str, db: DBSession) -> str:
+    def use_org_code(self, session_user_id, org_code: str, db: DBSession) -> bool:
+        db_org_code = db.query(OrgCode).filter_by(id=org_code).first()
+        if db_org_code:
+            if not db_org_code.valid:
+                raise HTTPException(status_code=410, detail='Organization code is no longer valid.')
+
+            self.add_user_to_organization(db, session_user_id, db_org_code.org_id)
+            if not db_org_code.org.owner_id:
+                db_org_code.org.owner_id = session_user_id
+                db_org_code.org.owner_datetime = datetime.now(timezone.utc)
+                try:
+                    db.commit()
+                except Exception:
+                    raise HTTPException(status_code=500, detail='Error overriding the owner of the org.')
+        else:
+            raise HTTPException(status_code=404, detail='Organization not found.')
+        return True
+
+    def create_organization(self, organization_name: str, db: DBSession) -> str:
         current_time = datetime.now(timezone.utc)
 
         new_org = Org(
             id=self.__get_unique_uuid(db, Org),
             name=organization_name,
-            owner_id=user_id,
-            owner_datetime=current_time,
         )
         db.add(new_org)
+
+        # add new org code
+        new_org_code = OrgCode(id=self.__get_unique_uuid(db, OrgCode), create_date_time=current_time, org_id=new_org.id)
+        db.add(new_org_code)
 
         try:
             db.commit()
 
-            new_user_org = UserOrg(user_id=user_id,
-                                   org_id=new_org.id,
-                                   entry_date_time=current_time)
-            db.add(new_user_org)
-            db.commit()
-
-            return new_org.id
+            return new_org_code.id
         except sqlalchemy.exc.IntegrityError:
             db.rollback()
-            raise HTTPException(status_code=500, detail='Error creating organization.')
+            raise HTTPException(status_code=401, detail='Error creating organization.')
 
     def delete_organization(self, token: str, org_id: str, db: DBSession) -> bool:
         user_id = self.verify_user_session(db, token)
