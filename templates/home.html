@@ -53,6 +53,8 @@
         '</article>';
       dlg.setAttribute('open', '');
       document.body.appendChild(dlg);
+      document.getElementById('add-code-input').focus();
+      document.getElementById('add-code-input').select();
       document.addEventListener('keydown', handleEscKeyPress);
       const closeBtn = document.getElementById("close-dlg-btn");
       closeBtn.addEventListener("click", (event) => {

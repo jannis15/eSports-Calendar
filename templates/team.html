@@ -139,6 +139,7 @@
               '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ url_for("static", path="img/x-24-2.svg") }}" alt=""></a>' +
             '</header>' +
             '<div id="dlg-main">' +
+              '<label for="edit-team-name-input">Neuen Namen eingeben:</label>' +
               '<input type="text" value="{{ team_details.team_name }}" id="edit-team-name-input">' +
             '</div>' +
             '<footer>' +
@@ -147,6 +148,8 @@
           '</article>';
         dlg.setAttribute('open', '');
         document.body.appendChild(dlg);
+        document.getElementById('edit-team-name-input').focus();
+        document.getElementById('edit-team-name-input').select();
         document.addEventListener('keydown', handleEscKeyPress);
         const closeBtn = document.getElementById("close-dlg-btn");
         closeBtn.addEventListener("click", (event) => {
