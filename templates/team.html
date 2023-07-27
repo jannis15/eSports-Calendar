@@ -10,7 +10,7 @@
   <section>
     <header class="management-header">
       <div class="logo-header org">
-        <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
+        <img src="{{ url_for('static', path='img/org_logo.png') }}" alt="Organization Logo">
       </div>
       <div>
         <div id="team-header-wrapper">
@@ -62,14 +62,14 @@
 
     if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
       teamHeaderWrapperEl.innerHTML += 
-        '<a data-tooltip="Team bearbeiten" data-placement="bottom" href="#">' +
+        '<a id="edit-team-anchor" data-tooltip="Team bearbeiten" data-placement="bottom" href="#">' +
           '<img src="{{ url_for("static", path="img/edit-2-32-2.svg") }}" alt="">' +
         '</a>';
     }
 
     if (currentMemberRole === TeamRole.OWNER) {
       teamHeaderWrapperEl.innerHTML += 
-      '<a data-tooltip="Team löschen" data-placement="bottom" href="#">' +
+      '<a id="delete-team-anchor" data-tooltip="Team löschen" data-placement="bottom" href="#">' +
         '<img src="{{ url_for("static", path="img/trash-2-32-2.svg") }}" alt="">' +
       '</a>';
     }
@@ -79,7 +79,7 @@
       let newHTML = 
         '<article class="member-card" id="'+member.user_id+'">'+
           '<div class="member-card-image">'+
-            '<img src="{{ url_for("static", path="img/kronic.jpg") }}" alt="">'+
+            '<img src="{{ url_for("static", path="img/org_logo.png") }}" alt="">'+
           '</div>'+
           '<article class="member-card-detail">'+
             '<h3>'+member.username+'</h3>'+
@@ -95,7 +95,6 @@
       }
 
       if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
-
         if (currentUserId != member.user_id) {
           if (memberRole === TeamRole.ADMIN) {
             newHTML += 
@@ -114,7 +113,7 @@
       if (((currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) ||
         (member.user_id === '{{ user_id }}')) && (memberRole != TeamRole.OWNER)) {
           newHTML +=
-          '<a data-tooltip="aus Team entfernen" data-placement="bottom" onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+          '<a data-tooltip="aus Team entfernen" data-placement="bottom" onClick="confirmRemoveTeamMember(event, \'' + member.username + '\', \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
             '<img src="{{ url_for("static", path="img/user-minus-16-2.svg") }}" alt="">'+
           '</a>';
       };
@@ -124,7 +123,101 @@
           '</article>'+
         '</article>';
       memberCardsEl.innerHTML += newHTML;
+
     });
+
+    if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
+      editTeamAnchorEl = document.getElementById("edit-team-anchor");
+      editTeamAnchorEl.addEventListener("click", (event) => {
+        event.preventDefault();
+        const dlg = document.createElement('dialog');
+        dlg.setAttribute('id', 'dlg');
+        dlg.innerHTML +=
+          '<article> ' +
+            '<header>' +
+              '<h3> Team umbenennen </h3>' +
+              '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ url_for("static", path="img/x-24-2.svg") }}" alt=""></a>' +
+            '</header>' +
+            '<div id="dlg-main">' +
+              '<input type="text" value="{{ team_details.team_name }}" id="edit-team-name-input">' +
+            '</div>' +
+            '<footer>' +
+              '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/save-24-2.svg") }} alt=""></a>' +
+            '</footer>' +
+          '</article>';
+        dlg.setAttribute('open', '');
+        document.body.appendChild(dlg);
+        document.addEventListener('keydown', handleEscKeyPress);
+        const closeBtn = document.getElementById("close-dlg-btn");
+        closeBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          closeDlg();
+        });
+      });
+    }
+
+    if (currentMemberRole === TeamRole.OWNER) {
+      deleteTeamAnchorEl = document.getElementById("delete-team-anchor");
+      deleteTeamAnchorEl.addEventListener("click", (event) => {
+        event.preventDefault();
+        const dlg = document.createElement('dialog');
+        dlg.setAttribute('id', 'dlg');
+        dlg.innerHTML +=
+          '<article> ' +
+            '<header>' +
+              '<h3> Team löschen </h3>' +
+            '</header>' +
+            '<div id="dlg-main">' +
+              '<span>' +
+                'ACHTUNG: Sie stehen kurz davor, das Team zu löschen.' +
+                ' Bitte beachten Sie, dass durch diese Aktion sämtliche Informationen zu diesem Team verloren gehen, ' +
+                ' einschließlich aller Mitgliedschaften und Termine, die diesem Team zugeordnet sind.' +
+              '</span>' +
+            '</div>' +
+            '<footer>' +
+              '<a href="#" id="cancel-dlg-btn" class="dlg-button outline" role="button">Abbrechen</a>' +
+              '<a href="#" id="confirm-dlg-btn" class="dlg-button primary" role="button">Bestätigen</a>' +
+            '</footer>' +
+          '</article>';
+        dlg.setAttribute('open', '');
+        document.body.appendChild(dlg);
+        document.addEventListener('keydown', handleEscKeyPress);
+        const cancelBtn = document.getElementById("cancel-dlg-btn");
+        cancelBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          closeDlg();
+        });
+      });
+    }
+  }
+
+  function confirmRemoveTeamMember(event, username, user_id) {
+    event.preventDefault();
+    const dlg = document.createElement('dialog');
+      dlg.setAttribute('id', 'dlg');
+      dlg.innerHTML +=
+        '<article> ' +
+          '<header>' +
+            '<h3> Mitglied aus Team entfernen </h3>' +
+          '</header>' +
+          '<div id="dlg-main">' +
+            '<span>' +
+              'Möchten Sie wirklich "'+username+'" aus "{{ team_details.team_name }}" entfernen?' +
+            '</span>' +
+          '</div>' +
+          '<footer>' +
+            '<a href="#" id="cancel-dlg-btn" class="dlg-button outline" role="button">Abbrechen</a>' +
+            '<a href="#" tid="confirm-dlg-btn" class="dlg-button primary" role="button">Bestätigen</a>' +
+          '</footer>' +
+        '</article>';
+      dlg.setAttribute('open', '');
+      document.body.appendChild(dlg);
+      document.addEventListener('keydown', handleEscKeyPress);
+      const cancelBtn = document.getElementById("cancel-dlg-btn");
+      cancelBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeDlg();
+      });
   }
 
   function addAdmin(event, user_id) {
@@ -181,18 +274,6 @@
         alert(xhr.responseText);
       }
     });
-  };
-
-  function closeDlg() {
-    document.removeEventListener('keydown', handleEscKeyPress);
-    const dlg = document.getElementById("dlg");
-    dlg.remove();
-  };
-
-  function handleEscKeyPress(event) {
-    if (event.key === 'Escape') {
-      closeDlg();
-    }
   };
 
   $(document).ready(() => { 

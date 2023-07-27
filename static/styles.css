@@ -661,7 +661,7 @@ aside ul li {
 
 .copy-input {
   display: flex;
-  margin: 2.5em 2.5em 0 2.5em;
+  /* margin: 2.5em 2.5em 0 2.5em; */
 }
 
 .copy-input > * {
@@ -683,14 +683,15 @@ aside ul li {
 }
 
 .dlg-disclaimer {
-  margin: 0.5em 2.5em 2.5em 2.5em !important;
+  margin-top: .5em !important;
 }
 
-.dlg-main {
-  display: flex;
+#dlg-main {
+  margin: 2.5em;
+  /* display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: center; */
 }
 
 .copy-container {

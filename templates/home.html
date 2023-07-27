@@ -1,11 +1,15 @@
 {% extends "home_layout.html" %}
 
+{% block head %}
+<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
+{% endblock %}
+
 {% block body %}
 <main class="container-fluid">
   <h1>Willkommen zurück, {{ username }}!</h1>
   <section class="home-orgs">
     <article class="organization-card add-organization">
-      <a class="organization-card-anchor" href="#">
+      <a id="add-organization-card" class="organization-card-anchor" href="#">
         <img src="{{ url_for('static', path='img/plus-circle-64-2.svg') }}" alt="">
         <h3>Organisation hinzufügen</h3>
       </a>
@@ -15,7 +19,7 @@
       <a data-tooltip="Kalender" data-placement="bottom" id="calendar-anchor" href="/org/{{organization.org_id}}/calendar"><img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt=""></a>
       <a class="organization-card-anchor" href="/org/{{organization.org_id}}">
         <figure class="organization-card-logo">
-          <img src="{{ url_for('static', path='img/kronic.jpg') }}" alt="Organization Logo">
+          <img src="{{ url_for('static', path='img/org_logo.png') }}" alt="Organization Logo">
         </figure>
         <footer>
           <h3>{{ organization.org_name }}</h3>
@@ -25,4 +29,37 @@
     {% endfor %}
   </section>
 </main>
+
+<script>
+  $(document).ready(() => { 
+    addOrganizationCardAnchorEl = document.getElementById("add-organization-card");
+    addOrganizationCardAnchorEl.addEventListener("click", (event) => {
+      event.preventDefault();
+      const dlg = document.createElement('dialog');
+      dlg.setAttribute('id', 'dlg');
+      dlg.innerHTML +=
+        '<article> ' +
+          '<header>' +
+            '<h3> Organistion hinzufügen </h3>' +
+            '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ url_for("static", path="img/x-24-2.svg") }}" alt=""></a>' +
+          '</header>' +
+          '<div id="dlg-main">' +
+            '<label for="add-code-input">Code eingeben:</label>' +
+            '<input type="text" id="add-code-input">' +
+          '</div>' +
+          '<footer>' +
+            '<a href="#" id="send-dlg-btn" class="dlg-button primary" role="button">Senden</a>' +
+          '</footer>' +
+        '</article>';
+      dlg.setAttribute('open', '');
+      document.body.appendChild(dlg);
+      document.addEventListener('keydown', handleEscKeyPress);
+      const closeBtn = document.getElementById("close-dlg-btn");
+      closeBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeDlg();
+      });
+    });
+  });
+</script>
 {% endblock %}

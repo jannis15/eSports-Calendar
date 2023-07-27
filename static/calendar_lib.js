@@ -137,3 +137,17 @@ function formatTime(dateStr) {
   const seconds = date.getSeconds().toString().padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
 }
+
+// Dialog
+
+function closeDlg() {
+  document.removeEventListener('keydown', handleEscKeyPress);
+  const dlg = document.getElementById("dlg");
+  dlg.remove();
+};
+
+function handleEscKeyPress(event) {
+  if (event.key === 'Escape') {
+    closeDlg();
+  }
+};
