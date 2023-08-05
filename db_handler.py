@@ -92,7 +92,7 @@ class DBHandler:
             id=self.__get_unique_uuid(db, User),
             username=credentials.username,
             password=credentials.password,
-            registration_date=datetime.now(timezone.utc)
+            registration_date=datetime.now(timezone.utc).replace(tzinfo=None)
         )
         db.add(new_user)
         try:
@@ -110,7 +110,7 @@ class DBHandler:
             self.add_user_to_organization(db, session_user_id, db_org_code.org_id)
             if not db_org_code.org.owner_id:
                 db_org_code.org.owner_id = session_user_id
-                db_org_code.org.owner_datetime = datetime.now(timezone.utc)
+                db_org_code.org.owner_datetime = datetime.now(timezone.utc).replace(tzinfo=None)
                 try:
                     db.commit()
                 except Exception:
@@ -120,7 +120,7 @@ class DBHandler:
         return True
 
     def create_organization(self, organization_name: str, db: DBSession) -> str:
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(timezone.utc).replace(tzinfo=None)
 
         new_org = Org(
             id=self.__get_unique_uuid(db, Org),
@@ -186,7 +186,7 @@ class DBHandler:
 
     def create_team(self, user_id, team_name, org_id: str, db: DBSession) -> str:
         if self.is_user_member_of_org(db, user_id, org_id):
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now(timezone.utc).replace(tzinfo=None)
             new_team = Team(
                 id=self.__get_unique_uuid(db, Team),
                 org_id=org_id,
@@ -210,24 +210,30 @@ class DBHandler:
         else:
             raise HTTPException(status_code=403, detail='User is not eligible to create a team.')
 
-    def delete_team(self, token: str, team_id: str, db: DBSession) -> bool:
-        user_id = self.verify_user_session(db, token)
+    def delete_team(self, db: DBSession, org_id, team_id, session_user_id: str) -> bool:
 
-        team = db.query(Team).filter_by(id=team_id).first()
+        team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
+        event_ids = [te.event_id for te in team.events]
+        db.expunge(team)
+
+        team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
 
         if team is None:
             raise HTTPException(status_code=404, detail='Team not found.')
 
-        if not self.__is_owner(user_id, team.owner_id):
+        if not self.__is_owner(session_user_id, team.owner_id):
             raise HTTPException(status_code=403, detail='Only the team owner can delete the team.')
 
         try:
             db.delete(team)
             db.commit()
-            return True
+            db.query(Event).filter(Event.id.in_(event_ids)).delete()
+            db.commit()
+            # return True
         except Exception:
             db.rollback()
             raise HTTPException(status_code=500, detail='Failed to delete team.')
+        return True
 
     def add_user_to_team(self, session_user_id, team_id, org_id, user_id: str, db: DBSession) -> bool:
         team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
@@ -278,7 +284,7 @@ class DBHandler:
         return self.add_user_to_team(token, team_id, org_id, session_user_id, db)
 
     def add_user_to_organization(self, db: DBSession, user_id: str, org_id: str) -> None:
-        current_time = datetime.utcnow()
+        current_time = datetime.utcnow().replace(tzinfo=None)
         if self.is_user_member_of_org(db, user_id, org_id):
             raise HTTPException(status_code=409, detail='User is already a member of the organization.')
 
@@ -395,16 +401,16 @@ class DBHandler:
             if db_event:
                 db_event.title = event.title
                 db_event.memo = event.memo
-                db_event.start_point = event.start_point
-                db_event.end_point = event.end_point
+                db_event.start_point = event.start_point.replace(tzinfo=None)
+                db_event.end_point = event.end_point.replace(tzinfo=None)
                 db_event.priority_id = event_priority.id
             else:
                 new_event = Event(
                     id=self.__get_unique_uuid(db, Event),
                     title=event.title,
                     memo=event.memo,
-                    start_point=event.start_point,
-                    end_point=event.end_point,
+                    start_point=event.start_point.replace(tzinfo=None),
+                    end_point=event.end_point.replace(tzinfo=None),
                     priority_id=event_priority.id
                 )
                 db.add(new_event)
@@ -433,7 +439,7 @@ class DBHandler:
             return '', ''
 
     def update_session(self, db: DBSession, user_id: str) -> str:
-        current_time = datetime.utcnow()
+        current_time = datetime.utcnow().replace(tzinfo=None)
         new_expiration_date = add_amount_of_days(current_time, 28)
 
         db_session = db.query(Session) \
@@ -465,7 +471,7 @@ class DBHandler:
         return tmp_id
 
     def verify_user_session(self, db: DBSession, token: str) -> str:
-        current_time = datetime.utcnow()
+        current_time = datetime.utcnow().replace(tzinfo=None)
         db_session = db.query(Session) \
             .filter(Session.id == token) \
             .filter(Session.expiration_date > current_time) \
@@ -487,7 +493,7 @@ class DBHandler:
             .first()
 
         if db_session is not None:
-            current_time = datetime.utcnow()
+            current_time = datetime.utcnow().replace(tzinfo=None)
             db_session.expiration_date = current_time
             db_session.latest_activity = current_time
             db.commit()
@@ -693,7 +699,7 @@ class DBHandler:
         return True
 
     def validate_invite(self, db_invite: Type[TeamInvite]) -> bool:
-        now = datetime.utcnow()
+        now = datetime.utcnow().replace(tzinfo=None)
         valid_duration = timedelta(hours=24)
         is_valid = db_invite.create_date_time + valid_duration >= now and not db_invite.used
 
@@ -740,7 +746,7 @@ class DBHandler:
             raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team.')
 
         new_team_invite = TeamInvite(id=self.__get_unique_uuid(db, TeamInvite),
-                                     create_date_time=datetime.now(timezone.utc),
+                                     create_date_time=datetime.now(timezone.utc).replace(tzinfo=None),
                                      team_id=team_id)
 
         db.add(new_team_invite)

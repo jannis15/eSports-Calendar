@@ -296,5 +296,15 @@ async def generate_invite(org_id, team_id, token: str = Cookie(None), db: DBSess
         "invite_id": invite_id,
     }
 
+
+@app.post('/org/{org_id}/team/{team_id}/delete-team')
+async def generate_invite(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    invite_id = db_handler.delete_team(db, org_id, team_id, user_id)
+
+    return {
+        "invite_id": invite_id,
+    }
+
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)

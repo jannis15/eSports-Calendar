@@ -35,7 +35,7 @@ class Event(Base):
     end_point = Column(DateTime, nullable=False)
     priority_id = Column(String, ForeignKey("EventPriority.id"), nullable=False)
     users = relationship("UserEvent", back_populates="event")
-    teams = relationship("TeamEvent", back_populates="event")
+    teams = relationship("TeamEvent", back_populates="event", cascade="all, delete-orphan")
     priority = relationship("EventPriority", back_populates="events")
 
 
@@ -78,20 +78,22 @@ class Team(Base):
     name = Column(String, nullable=False)
     owner_id = Column(String, ForeignKey("User.id"))
     owner_datetime = Column(DateTime, nullable=False)
-    users = relationship("UserTeam", back_populates="team")
+    users = relationship("UserTeam", back_populates="team", passive_deletes=True)
     org = relationship("Org", back_populates="teams")
-    events = relationship("TeamEvent", back_populates="team")
-    invites = relationship("TeamInvite", back_populates="team")
+    events = relationship("TeamEvent", back_populates="team", passive_deletes=True)
+    invites = relationship("TeamInvite", back_populates="team", passive_deletes=True)
+
 
 
 class UserTeam(Base):
     __tablename__ = "UserTeam"
 
     user_id = Column(String, ForeignKey("User.id"), primary_key=True)
-    team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
+    team_id = Column(String, ForeignKey("Team.id", ondelete="CASCADE"), primary_key=True)
     is_admin = Column(Boolean, nullable=False, default=False)
     user = relationship("User", back_populates="teams")
     team = relationship("Team", back_populates="users")
+
 
 
 class UserOrg(Base):
@@ -107,10 +109,10 @@ class UserOrg(Base):
 class TeamEvent(Base):
     __tablename__ = "TeamEvent"
 
-    team_id = Column(String, ForeignKey("Team.id"), primary_key=True)
+    team_id = Column(String, ForeignKey("Team.id", ondelete="CASCADE"), primary_key=True)
     event_id = Column(String, ForeignKey("Event.id"), primary_key=True)
     team = relationship("Team", back_populates="events")
-    event = relationship("Event", back_populates="teams")
+    event = relationship("Event", back_populates="teams", cascade="all, delete-orphan", single_parent=True)
 
 
 class TeamInvite(Base):
@@ -118,7 +120,7 @@ class TeamInvite(Base):
 
     id = Column(String, primary_key=True, index=True)
     create_date_time = Column(DateTime, nullable=False)
-    team_id = Column(String, ForeignKey("Team.id"), nullable=False)
+    team_id = Column(String, ForeignKey("Team.id", ondelete="CASCADE"), nullable=False)
     used = Column(Boolean, nullable=False, default=False)
     team = relationship("Team", back_populates="invites")
 

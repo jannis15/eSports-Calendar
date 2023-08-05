@@ -190,6 +190,12 @@
           event.preventDefault();
           closeDlg();
         });
+        const confirmBtn = document.getElementById("confirm-dlg-btn");
+        confirmBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          closeDlg();
+          deleteTeam();
+        });
       });
     }
   }
@@ -272,6 +278,21 @@
       complete: () => {handleAjaxComplete(membersHeaderEl)},
       success: (data, response) => {
         updateMembers(data.user_id, data.team_members);
+      },
+      error: (xhr) => {
+        alert(xhr.responseText);
+      }
+    });
+  };
+
+  function deleteTeam() {
+    $.ajax({
+      url: '/org/'+'{{ org_id }}'+'/team/'+'{{ team_id }}/delete-team',
+      method: 'POST',
+      beforeSend: () => {},
+      complete: () => {},
+      success: (data, response) => {
+        location.href = '/org/{{ org_id }}';
       },
       error: (xhr) => {
         alert(xhr.responseText);
