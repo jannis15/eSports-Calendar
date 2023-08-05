@@ -148,13 +148,20 @@
           '</article>';
         dlg.setAttribute('open', '');
         document.body.appendChild(dlg);
-        document.getElementById('edit-team-name-input').focus();
-        document.getElementById('edit-team-name-input').select();
+        const editTeamNameInputEl = document.getElementById('edit-team-name-input');
+        editTeamNameInputEl.focus();
+        editTeamNameInputEl.select();
         document.addEventListener('keydown', handleEscKeyPress);
         const closeBtn = document.getElementById("close-dlg-btn");
         closeBtn.addEventListener("click", (event) => {
           event.preventDefault();
           closeDlg();
+        });
+        const checkBtn = document.getElementById("check-dlg-btn");
+        checkBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          closeDlg();
+          renameTeam(editTeamNameInputEl.value);
         });
       });
     }
@@ -200,7 +207,7 @@
     }
   }
 
-  function confirmRemoveTeamMember(event, username, user_id) {
+  function confirmRemoveTeamMember(event, username, userId) {
     event.preventDefault();
     const dlg = document.createElement('dialog');
       dlg.setAttribute('id', 'dlg');
@@ -216,7 +223,7 @@
           '</div>' +
           '<footer>' +
             '<a href="#" id="cancel-dlg-btn" class="dlg-button outline" role="button">Abbrechen</a>' +
-            '<a href="#" tid="confirm-dlg-btn" class="dlg-button primary" role="button">Bestätigen</a>' +
+            '<a href="#" id="confirm-dlg-btn" class="dlg-button primary" role="button">Bestätigen</a>' +
           '</footer>' +
         '</article>';
       dlg.setAttribute('open', '');
@@ -226,6 +233,12 @@
       cancelBtn.addEventListener("click", (event) => {
         event.preventDefault();
         closeDlg();
+      });
+      const confirmBtn = document.getElementById("confirm-dlg-btn");
+      confirmBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeDlg();
+        removeMember(userId);
       });
   }
 
@@ -299,6 +312,40 @@
       }
     });
   };
+
+  function removeMember(userId) {
+    $.ajax({
+      url: '/org/'+'{{ org_id }}'+'/team/'+'{{ team_id }}/remove-member',
+      method: 'POST',
+      beforeSend: () => {},
+      complete: () => {},
+      data: JSON.stringify({ user_id: userId }),
+      contentType: 'application/json',
+      success: (data, response) => {
+        updateMembers(data.user_id, data.team_members);
+      },
+      error: (xhr) => {
+        alert(xhr.responseText);
+      }
+    });
+  };
+
+  function renameTeam(newTeamName) {
+  $.ajax({
+    url: '/org/' + '{{ org_id }}' + '/team/' + '{{ team_id }}/rename-team',
+    method: 'POST',
+    beforeSend: () => {},
+    complete: () => {},
+    data: JSON.stringify({ team_name: newTeamName }),
+    contentType: 'application/json',
+    success: (data, response) => {
+      location.reload();
+    },
+    error: (xhr) => {
+      alert(xhr.responseText);
+    }
+  });
+}
 
   $(document).ready(() => { 
     getMembers();

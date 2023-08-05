@@ -47,7 +47,7 @@ class TeamDetailsMemberSchema(BaseModel):
     members: List[MemberSchema]
 
 
-class TeamCreateSchema(BaseModel):
+class TeamNameSchema(BaseModel):
     team_name: str
 
 
@@ -109,6 +109,10 @@ class OrgCalendarSchema(BaseModel):
 class ChangeTeamRoleSchema(BaseModel):
     user_id: str
     new_admin_state: bool
+
+
+class UserIdSchema(BaseModel):
+    user_id: str
 
 
 # class EventPrioritySchema(BaseModel):

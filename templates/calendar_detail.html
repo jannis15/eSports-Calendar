@@ -401,12 +401,6 @@
             data: JSON.stringify({memberEvents: memberJSON, teamsEvents: teamsJSON}),
             beforeSend: () => {StartLoading(saveBtn)},
             complete: () => {StopLoading(saveBtn)},
-            success: (data) => {
-              // updateEvents(data.events);
-            },
-            error: (xhr) => {
-              // alert(xhr.responseJSON.detail);
-            }
           });
         });
 

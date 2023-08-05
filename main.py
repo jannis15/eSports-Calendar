@@ -9,8 +9,8 @@ import db_event_listener
 import db_models
 from db_handler import DBHandler, get_db
 from db_session import engine
-from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamCreateSchema, \
-    PostOrgCalendarSchema, ChangeTeamRoleSchema
+from schemas import LoginCredentials, RegistrationCredentials, OrganizationCreateSchema, TeamNameSchema, \
+    PostOrgCalendarSchema, ChangeTeamRoleSchema, UserIdSchema
 from utils import hash_password, verify_password
 
 app = FastAPI()
@@ -57,7 +57,7 @@ async def get_home(request: Request, token: str = Cookie(None), db: DBSession = 
 async def get_calendar_detail(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
-        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit')
 
     return templates.TemplateResponse("calendar_detail.html", {
         "request": request,
@@ -75,7 +75,7 @@ async def post_calendar_details(org_id, calendar_details: PostOrgCalendarSchema,
     if user_id == calendar_details.memberEvents.user_id:
         db_handler.update_events_for_user(user_id, calendar_details.memberEvents.events, db)
     else:
-        raise HTTPException(status_code=403, detail='You are not allowed to modify events from the provided user.')
+        raise HTTPException(status_code=403, detail='You are not allowed to modify events from the provided user')
 
     for team in calendar_details.teamsEvents:
         db_handler.update_events_for_team(user_id, org_id, team.team_id, team.events, db)
@@ -89,7 +89,7 @@ async def post_calendar_details(org_id, calendar_details: PostOrgCalendarSchema,
 async def get_team_creation(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
-        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit')
 
     return templates.TemplateResponse("create_team.html", {
         "request": request,
@@ -100,12 +100,12 @@ async def get_team_creation(org_id, request: Request, token: str = Cookie(None),
 
 
 @app.post('/org/{org_id}/team-creation')
-async def post_team_creation(request: TeamCreateSchema, org_id, token: str = Cookie(None),
+async def post_team_creation(request: TeamNameSchema, org_id, token: str = Cookie(None),
                              db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not eligible to create a team because you are not a '
-                                                    'member of the organization.')
+                                                    'member of the organization')
 
     team_id = db_handler.create_team(user_id, request.team_name, org_id, db)
 
@@ -122,7 +122,7 @@ async def join_team(org_id, team_id, token: str = Cookie(None), db: DBSession = 
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not eligible to join a team because you are not a member '
-                                                    'of the organization.')
+                                                    'of the organization')
 
     db_handler.add_user_to_team(user_id, team_id, org_id, user_id, db)
 
@@ -137,7 +137,7 @@ async def leave_team(org_id, team_id, token: str = Cookie(None), db: DBSession =
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
         raise HTTPException(status_code=403, detail='You are not eligible to leave a team because you are not a '
-                                                    'member of the organization.')
+                                                    'member of the organization')
 
     db_handler.delete_user_from_team(user_id, team_id, org_id, user_id, db)
 
@@ -151,7 +151,7 @@ async def leave_team(org_id, team_id, token: str = Cookie(None), db: DBSession =
 async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
-        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit')
 
     return templates.TemplateResponse("org.html", {
         "request": request,
@@ -166,7 +166,7 @@ async def get_org(org_id, request: Request, token: str = Cookie(None), db: DBSes
 async def get_team(org_id, team_id, request: Request, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
-        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit')
 
     return templates.TemplateResponse("team.html", {
         "request": request,
@@ -182,7 +182,7 @@ async def get_team(org_id, team_id, request: Request, token: str = Cookie(None),
 async def get_team_members(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     if not db_handler.is_user_member_of_org(db, user_id, org_id):
-        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit.')
+        raise HTTPException(status_code=403, detail='You are not a member of the organization you want to visit')
 
     team_members = db_handler.get_team_members(db, org_id, team_id)
 
@@ -253,7 +253,7 @@ async def get_admin_panel(request: Request, token: str = Cookie(None), db: DBSes
     if username == 'Admin':
         return templates.TemplateResponse("admin.html", {"request": request})
     else:
-        raise HTTPException(status_code=403, detail='Only the admin can access this route.')
+        raise HTTPException(status_code=403, detail='Only the admin can access this route')
 
 
 @app.post("/join-org/{org_code}")
@@ -261,8 +261,9 @@ async def join_org(org_code, token: str = Cookie(None), db: DBSession = Depends(
     user_id = db_handler.verify_user_session(db, token)
     db_handler.use_org_code(user_id, org_code, db)
     return {
-        "message": "Organization joined successfully.",
+        "message": "Organization joined successfully",
     }
+
 
 @app.post("/org-creation")
 async def post_org(request: OrganizationCreateSchema, token: str = Cookie(None), db: DBSession = Depends(get_db)):
@@ -271,11 +272,11 @@ async def post_org(request: OrganizationCreateSchema, token: str = Cookie(None),
     if username == 'Admin':
         org_code = db_handler.create_organization(request.name, db)
         return {
-            "message": "Organization created successfully.",
+            "message": "Organization created successfully",
             "org_code": org_code,
         }
     else:
-        raise HTTPException(status_code=403, detail='Only the admin can create an organization.')
+        raise HTTPException(status_code=403, detail='Only the admin can create an organization')
 
 
 @app.get("/invite/{invite_id}")
@@ -298,13 +299,38 @@ async def generate_invite(org_id, team_id, token: str = Cookie(None), db: DBSess
 
 
 @app.post('/org/{org_id}/team/{team_id}/delete-team')
-async def generate_invite(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
+async def delete_team(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
     invite_id = db_handler.delete_team(db, org_id, team_id, user_id)
 
     return {
-        "invite_id": invite_id,
+        "message": "Team deleted successfully",
     }
+
+
+@app.post('/org/{org_id}/team/{team_id}/rename-team')
+async def rename_team(request: TeamNameSchema, org_id, team_id, token: str = Cookie(None),
+                      db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    invite_id = db_handler.rename_team(db, org_id, team_id, user_id, request.team_name)
+
+    return {
+        "message": "Team renamed successfully",
+    }
+
+
+@app.post('/org/{org_id}/team/{team_id}/remove-member')
+async def remove_user(request: UserIdSchema, org_id, team_id, token: str = Cookie(None),
+                      db: DBSession = Depends(get_db)):
+    user_id = db_handler.verify_user_session(db, token)
+    invite_id = db_handler.remove_member_from_team(db, org_id, team_id, user_id, request.user_id)
+
+    team_members = db_handler.get_team_members(db, org_id, team_id)
+    return {
+        "user_id": user_id,
+        "team_members": team_members,
+    }
+
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)

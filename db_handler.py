@@ -206,9 +206,51 @@ class DBHandler:
                 return new_team.id
             except sqlalchemy.exc.IntegrityError:
                 db.rollback()
-                raise HTTPException(status_code=500, detail='Error creating team.')
+                raise HTTPException(status_code=500, detail='Error creating team')
         else:
-            raise HTTPException(status_code=403, detail='User is not eligible to create a team.')
+            raise HTTPException(status_code=403, detail='User is not eligible to create a team')
+
+    def rename_team(self, db: DBSession, org_id, team_id, session_user_id, new_team_name: str) -> bool:
+        session_user_team = db.query(UserTeam).filter_by(user_id=session_user_id, team_id=team_id).first()
+        team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
+        if team is None:
+            raise HTTPException(status_code=404, detail='Team not found')
+        if not (self.__is_owner(session_user_id, team.owner_id) or (session_user_team is not None and
+                                                                    session_user_team.is_admin)):
+            raise HTTPException(status_code=403, detail='Only the team owner and the admins'
+                                                        ' are allowed to rename the team')
+        try:
+            team.name = new_team_name
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise HTTPException(status_code=500, detail='Failed to rename team')
+        return True
+
+    def remove_member_from_team(self, db: DBSession, org_id, team_id, session_user_id, user_id: str) -> bool:
+        session_user_team = db.query(UserTeam).filter_by(user_id=session_user_id, team_id=team_id).first()
+        team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
+        if team is None:
+            raise HTTPException(status_code=404, detail='Team not found')
+        if not (session_user_id == user_id):
+            if not (self.__is_owner(session_user_id, team.owner_id) or (session_user_team is not None and
+                                                                        session_user_team.is_admin)):
+                raise HTTPException(status_code=403, detail='Only the team owner and the admins are allowed to remove '
+                                                            'members from the team')
+        if team.owner_id == user_id:
+            raise HTTPException(status_code=409, detail='The owner of the team cannot be removed from the team')
+
+        user_team = db.query(UserTeam).filter_by(user_id=user_id, team_id=team_id).first()
+        if not user_team:
+            raise HTTPException(status_code=404, detail='User to be removed is not part of the team')
+
+        try:
+            db.delete(user_team)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise HTTPException(status_code=500, detail='Failed to remove member')
+        return True
 
     def delete_team(self, db: DBSession, org_id, team_id, session_user_id: str) -> bool:
 
@@ -219,10 +261,10 @@ class DBHandler:
         team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
 
         if team is None:
-            raise HTTPException(status_code=404, detail='Team not found.')
+            raise HTTPException(status_code=404, detail='Team not found')
 
         if not self.__is_owner(session_user_id, team.owner_id):
-            raise HTTPException(status_code=403, detail='Only the team owner can delete the team.')
+            raise HTTPException(status_code=403, detail='Only the team owner can delete the team')
 
         try:
             db.delete(team)
@@ -232,19 +274,19 @@ class DBHandler:
             # return True
         except Exception:
             db.rollback()
-            raise HTTPException(status_code=500, detail='Failed to delete team.')
+            raise HTTPException(status_code=500, detail='Failed to delete team')
         return True
 
     def add_user_to_team(self, session_user_id, team_id, org_id, user_id: str, db: DBSession) -> bool:
         team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
         if team is None:
-            raise HTTPException(status_code=404, detail='Team not found.')
+            raise HTTPException(status_code=404, detail='Team not found')
 
         if not self.__is_owner(session_user_id, team.owner_id) and session_user_id != user_id:
-            raise HTTPException(status_code=403, detail='Only the team owner can add others to the team.')
+            raise HTTPException(status_code=403, detail='Only the team owner can add others to the team')
 
         if self.is_user_member_of_team(db, user_id, team_id):
-            raise HTTPException(status_code=409, detail='User already exists in team.')
+            raise HTTPException(status_code=409, detail='User already exists in team')
 
         try:
             new_user_team = UserTeam(user_id=user_id, team_id=team_id, is_admin=False)
@@ -254,7 +296,7 @@ class DBHandler:
             return True
         except sqlalchemy.exc.IntegrityError:
             db.rollback()
-            raise HTTPException(status_code=500, detail='Error adding user to team.')
+            raise HTTPException(status_code=500, detail='Error adding user to team')
 
     def delete_user_from_team(self, session_user_id, team_id, org_id, user_id: str, db: DBSession) -> bool:
         team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
@@ -265,11 +307,11 @@ class DBHandler:
             raise HTTPException(status_code=403, detail='Only the team owner can delete others from the team')
 
         if self.__is_owner(user_id, team.owner_id):
-            raise HTTPException(status_code=403, detail='The team owner cannot be deleted from the team.')
+            raise HTTPException(status_code=403, detail='The team owner cannot be deleted from the team')
 
         user_team = db.query(UserTeam).filter_by(user_id=user_id, team_id=team_id).first()
         if not user_team:
-            raise HTTPException(status_code=404, detail='User does not exist in team.')
+            raise HTTPException(status_code=404, detail='User does not exist in team')
 
         try:
             db.delete(user_team)
@@ -277,7 +319,7 @@ class DBHandler:
             return True
         except Exception as e:
             db.rollback()
-            raise HTTPException(status_code=500, detail='Failed to delete user from team.')
+            raise HTTPException(status_code=500, detail='Failed to delete user from team')
 
     def add_yourself_to_team(self, token: str, team_id: str, org_id: str, db: DBSession) -> bool:
         session_user_id = self.verify_user_session(db, token)
@@ -286,13 +328,13 @@ class DBHandler:
     def add_user_to_organization(self, db: DBSession, user_id: str, org_id: str) -> None:
         current_time = datetime.utcnow().replace(tzinfo=None)
         if self.is_user_member_of_org(db, user_id, org_id):
-            raise HTTPException(status_code=409, detail='User is already a member of the organization.')
+            raise HTTPException(status_code=409, detail='User is already a member of the organization')
 
         if not self.user_exists(db, user_id):
-            raise HTTPException(status_code=404, detail='User not found.')
+            raise HTTPException(status_code=404, detail='User not found')
 
         if not self.org_exists(db, org_id):
-            raise HTTPException(status_code=404, detail='Organization not found.')
+            raise HTTPException(status_code=404, detail='Organization not found')
 
         try:
             new_user_org = UserOrg(
@@ -304,7 +346,7 @@ class DBHandler:
             db.commit()
         except Exception:
             db.rollback()
-            raise HTTPException(status_code=500, detail='Failed to add user to organization.')
+            raise HTTPException(status_code=500, detail='Failed to add user to organization')
 
     def get_org_name_by_id(self, db: DBSession, org_id: str) -> str:
         db_org = db.query(Org).filter(Org.id == org_id).first()
@@ -318,11 +360,11 @@ class DBHandler:
             session_user_team = db.query(UserTeam).filter_by(user_id=session_user_id, team_id=team_id).first()
             team = db.query(Team).filter_by(id=team_id, org_id=org_id).first()
             if team is None:
-                raise HTTPException(status_code=404, detail='Team not found.')
+                raise HTTPException(status_code=404, detail='Team not found')
             if not (self.__is_owner(session_user_id, team.owner_id) or (session_user_team is not None and
                                                                         session_user_team.is_admin)):
                 raise HTTPException(status_code=403, detail='Only the team owner and the admins'
-                                                            ' are allowed to modify events here.')
+                                                            ' are allowed to modify events here')
 
             db_team_events = db.query(TeamEvent).filter(TeamEvent.team_id == team_id).all()
 
@@ -396,7 +438,7 @@ class DBHandler:
             event_priority = db.query(EventPriority).filter(EventPriority.name == event.event_priority).first()
 
             if not event_priority:
-                raise HTTPException(status_code=404, detail=f"Event priority '{event.event_priority}' not found.")
+                raise HTTPException(status_code=404, detail=f"Event priority '{event.event_priority}' not found")
 
             if db_event:
                 db_event.title = event.title
@@ -466,7 +508,7 @@ class DBHandler:
             db.commit()
         except Exception:
             db.rollback()
-            raise HTTPException(status_code=500, detail='Failed to update session.')
+            raise HTTPException(status_code=500, detail='Failed to update session')
 
         return tmp_id
 
@@ -485,7 +527,7 @@ class DBHandler:
 
             return db_session.user_id
         else:
-            raise HTTPException(status_code=403, detail='Session has expired or was not found.')
+            raise HTTPException(status_code=403, detail='Session has expired or was not found')
 
     def end_session(self, db: DBSession, token: str) -> bool:
         db_session = db.query(Session) \
@@ -527,8 +569,8 @@ class DBHandler:
             events.append(user_event.event)
         return self.__format_events_to_event_schemas(events)
 
-    def __format_members_to_member_with_events_schemas(self, session_user_id: str, users: List[UserTeam]) -> List[
-        MemberEventsSchema]:
+    def __format_members_to_member_with_events_schemas(self, session_user_id: str, users: List[UserTeam]) -> \
+            List[MemberEventsSchema]:
         members = []
         for user_team in users:
             member = MemberEventsSchema(
@@ -566,7 +608,7 @@ class DBHandler:
 
     def get_organization_details(self, org_id: str, db: DBSession) -> OrganizationDetailsSchema:
         if not self.org_exists(db, org_id):
-            raise HTTPException(status_code=404, detail='Organization not found.')
+            raise HTTPException(status_code=404, detail='Organization not found')
 
         db_org = db.query(Org).filter(Org.id == org_id).first()
 
@@ -612,7 +654,7 @@ class DBHandler:
 
     def get_team_details(self, db: DBSession, org_id, team_id: str) -> TeamDetailsSchema:
         if not self.team_exists_in_org(db, team_id, org_id):
-            raise HTTPException(status_code=404, detail='Team not found in organization.')
+            raise HTTPException(status_code=404, detail='Team not found in organization')
 
         db_team = db.query(Team).filter_by(id=team_id).first()
 
@@ -629,12 +671,12 @@ class DBHandler:
             owner_id=db_team.owner_id,
             owner_name=self.get_username_by_id(db_team.owner_id, db),
             owner_datetime=db_team.owner_datetime,
-            members=members  # Don't forget to include the sorted members in the return value
+            members=members
         )
 
     def get_team_members(self, db: DBSession, org_id, team_id: str) -> TeamDetailsMemberSchema:
         if not self.team_exists_in_org(db, team_id, org_id):
-            raise HTTPException(status_code=404, detail='Team not found in organization.')
+            raise HTTPException(status_code=404, detail='Team not found in organization')
 
         db_team = db.query(Team).filter_by(id=team_id).first()
 
@@ -666,32 +708,32 @@ class DBHandler:
     def change_team_role(self, db: DBSession, org_id, team_id, session_user_id: str, schema: ChangeTeamRoleSchema) \
             -> bool:
         if session_user_id == schema.user_id:
-            raise HTTPException(status_code=409, detail='You are not allowed to change your own role.')
+            raise HTTPException(status_code=409, detail='You are not allowed to change your own role')
 
         if not self.team_exists_in_org(db, team_id, org_id):
-            raise HTTPException(status_code=404, detail='Team not found in organization.')
+            raise HTTPException(status_code=404, detail='Team not found in organization')
 
         if not self.is_user_member_of_team(db, schema.user_id, team_id):
-            raise HTTPException(status_code=404, detail='User does not exist in the team.')
+            raise HTTPException(status_code=404, detail='User does not exist in the team')
 
         if not self.is_user_member_of_team(db, session_user_id, team_id):
-            raise HTTPException(status_code=403, detail='You are not allowed to modify roles.')
+            raise HTTPException(status_code=403, detail='You are not allowed to modify roles')
 
         db_team = db.query(Team).filter_by(id=team_id).first()
 
         if db_team.owner_id == schema.user_id:
-            raise HTTPException(status_code=409, detail='The role of the owner cannot be changed as of now.')
+            raise HTTPException(status_code=409, detail='The role of the owner cannot be changed as of now')
 
         session_user_team = next((user_team for user_team in db_team.users if user_team.user_id == session_user_id),
                                  None)
 
         if not (db_team.owner_id == session_user_id or session_user_team.is_admin):
-            raise HTTPException(status_code=403, detail='You are not allowed to modify roles.')
+            raise HTTPException(status_code=403, detail='You are not allowed to modify roles')
 
         user_team = next((user_team for user_team in db_team.users if user_team.user_id == schema.user_id), None)
 
         if user_team.is_admin == schema.new_admin_state:
-            raise HTTPException(status_code=409, detail='The user already has this role.')
+            raise HTTPException(status_code=409, detail='The user already has this role')
 
         user_team.is_admin = schema.new_admin_state
         db.commit()
@@ -714,36 +756,36 @@ class DBHandler:
                 is_member_of_org = self.is_user_member_of_org(db, session_user_id, db_invite.team.org.id)
                 if not is_member_of_org:
                     raise HTTPException(status_code=403, detail='You are not a member of the org. You first have to '
-                                                                'request access to the organization itself.')
+                                                                'request access to the organization itself')
 
                 if self.is_user_member_of_team(db, session_user_id, db_invite.team.id):
                     raise HTTPException(status_code=409, detail='You are already a member of the team. The invite '
-                                                                'is still valid for others.')
+                                                                'is still valid for others')
 
                 new_user_team = UserTeam(user_id=session_user_id, team_id=db_invite.team_id, is_admin=False)
                 db.add(new_user_team)
                 db_invite.used = True
                 db.commit()
             else:
-                raise HTTPException(status_code=410, detail='Invite is no longer valid.')
+                raise HTTPException(status_code=410, detail='Invite is no longer valid')
         else:
-            raise HTTPException(status_code=404, detail='Invite does not exist.')
+            raise HTTPException(status_code=404, detail='Invite does not exist')
 
         return db_invite.team.org.id, db_invite.team.id
 
     def generate_invite(self, db: DBSession, org_id, team_id, session_user_id: str) -> str:
         if not self.team_exists_in_org(db, team_id, org_id):
-            raise HTTPException(status_code=404, detail='Team not found in organization.')
+            raise HTTPException(status_code=404, detail='Team not found in organization')
 
         if not self.is_user_member_of_team(db, session_user_id, team_id):
-            raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team.')
+            raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team')
 
         db_team = db.query(Team).filter_by(id=team_id).first()
         session_user_team = next((user_team for user_team in db_team.users if user_team.user_id == session_user_id),
                                  None)
 
         if not (db_team.owner_id == session_user_id or session_user_team.is_admin):
-            raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team.')
+            raise HTTPException(status_code=403, detail='You are not allowed to generate invites for this team')
 
         new_team_invite = TeamInvite(id=self.__get_unique_uuid(db, TeamInvite),
                                      create_date_time=datetime.now(timezone.utc).replace(tzinfo=None),
