@@ -1,4 +1,4 @@
-import uvicorn
+# import uvicorn
 from fastapi import FastAPI, Request, Response, HTTPException, Depends, Cookie
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -301,7 +301,7 @@ async def generate_invite(org_id, team_id, token: str = Cookie(None), db: DBSess
 @app.post('/org/{org_id}/team/{team_id}/delete-team')
 async def delete_team(org_id, team_id, token: str = Cookie(None), db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
-    invite_id = db_handler.delete_team(db, org_id, team_id, user_id)
+    db_handler.delete_team(db, org_id, team_id, user_id)
 
     return {
         "message": "Team deleted successfully",
@@ -312,7 +312,7 @@ async def delete_team(org_id, team_id, token: str = Cookie(None), db: DBSession 
 async def rename_team(request: TeamNameSchema, org_id, team_id, token: str = Cookie(None),
                       db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
-    invite_id = db_handler.rename_team(db, org_id, team_id, user_id, request.team_name)
+    db_handler.rename_team(db, org_id, team_id, user_id, request.team_name)
 
     return {
         "message": "Team renamed successfully",
@@ -323,7 +323,7 @@ async def rename_team(request: TeamNameSchema, org_id, team_id, token: str = Coo
 async def remove_user(request: UserIdSchema, org_id, team_id, token: str = Cookie(None),
                       db: DBSession = Depends(get_db)):
     user_id = db_handler.verify_user_session(db, token)
-    invite_id = db_handler.remove_member_from_team(db, org_id, team_id, user_id, request.user_id)
+    db_handler.remove_member_from_team(db, org_id, team_id, user_id, request.user_id)
 
     team_members = db_handler.get_team_members(db, org_id, team_id)
     return {
@@ -331,6 +331,6 @@ async def remove_user(request: UserIdSchema, org_id, team_id, token: str = Cooki
         "team_members": team_members,
     }
 
-
-if __name__ == '__main__':
-    uvicorn.run(app, host='127.0.0.1', port=8000)
+#
+# if __name__ == '__main__':
+#     uvicorn.run(app, host='127.0.0.1', port=8000)
