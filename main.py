@@ -1,4 +1,5 @@
-# import uvicorn
+import uvicorn
+from typing import Any
 from fastapi import FastAPI, Request, Response, HTTPException, Depends, Cookie
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +19,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 db_handler = DBHandler()
 db_models.Base.metadata.create_all(bind=engine)
 templates = Jinja2Templates(directory="templates")
+
+
+def https_url_for(request: Request, name: str, **path_params: Any) -> str:
+    http_url = str(request.url_for(name, **path_params))
+    return http_url.replace("http", "https", 1)
+
+
+templates.env.globals["https_url_for"] = https_url_for
 
 
 @app.exception_handler(HTTPException)
@@ -331,6 +340,6 @@ async def remove_user(request: UserIdSchema, org_id, team_id, token: str = Cooki
         "team_members": team_members,
     }
 
-#
-# if __name__ == '__main__':
-#     uvicorn.run(app, host='127.0.0.1', port=8000)
+
+if __name__ == '__main__':
+    uvicorn.run(app, host='127.0.0.1', port=8000)
