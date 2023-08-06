@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block body %}
-  <aside>
+  <aside id="teams-side-view">
     {% for team in organization_details.teams %}
     {% if not (team.team_id == "-1" and team.members|length == 0) %}
     <section>
@@ -26,7 +26,7 @@
     {% endfor %}
   </aside>
 
-  <main class="management-main">
+  <main class="management-main" id="org-main">
     <section>
       <header class="management-header">
         <div class="logo-header org">
@@ -65,6 +65,22 @@
     createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.owner_datetime }}");
     const createDatetimeElement = document.getElementById("create-info");
     createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
+
+    const orgMainEl = document.getElementById("org-main");
+    orgMainEl.classList.add("with-margin");
+    const leftSideNavEl = document.getElementById("left-side-nav");
+    leftSideNavEl.innerHTML = '<li><a id="guide-icon-anchor" href=""><img src="{{ dynamic_url_for(request, "static", path="img/menu-24-2.svg") }}" alt=""></a></li>' + leftSideNavEl.innerHTML;
+    const guideIconEl = document.getElementById("guide-icon-anchor");
+    guideIconEl.addEventListener("click", (event) => { 
+      event.preventDefault();
+      const teamsSideViewEl = document.getElementById("teams-side-view"); 
+      teamsSideViewEl.classList.toggle("close");
+      if (teamsSideViewEl.classList.contains("close")) {
+        orgMainEl.classList.remove("with-margin");
+      } else {
+        orgMainEl.classList.add("with-margin");
+      }
+    });
   </script>
 
 {% endblock %}

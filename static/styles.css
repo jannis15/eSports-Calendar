@@ -30,8 +30,12 @@ main {
   padding: 1rem !important;
 }
 
-section {
+section:not(:last-child) {
   margin-bottom: 1em;
+}
+
+section:last-child {
+  margin-bottom: 0;
 }
 
 a, button {
@@ -404,18 +408,29 @@ article.organization-card:hover {
 
 /* Management */
 
+@media (min-width: 400px) {
+  .with-margin {
+    margin-left: 12rem;
+  }
+}
+
+.close {
+  display: none !important;
+}
+
 aside {
   z-index: 99;
   position: fixed;
   left: 0;
   top: 3.5rem;
   bottom: 0;
-  width: 12rem;
+  min-width: 12rem;
   padding: 1rem;
   border-right: var(--divider);
   overflow-x: hidden;
   overflow-y: auto;
   background-color: var(--bg-color);
+  margin: 0 !important;
 }
 
 aside b {
@@ -434,7 +449,7 @@ aside ul li {
 }
 
 .management-main {
-  margin-left: 12rem;
+  /* margin-left: 12rem; */
   width: unset;
   display: flex;
   justify-content: center;
@@ -470,10 +485,6 @@ aside ul li {
   border-radius: 50%;
   overflow: hidden;
 }
-
-/* .logo-header.team {
-  border-radius: .5em;
-} */
 
 .org-logo-header img {
   display: block;
