@@ -1,8 +1,8 @@
 {% extends "calendar_layout.html" %}
 
 {% block head %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
-<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="{{ dynamic_url_for(request, 'static', path='styles.css') }}">
+<script src="{{ dynamic_url_for(request, 'static', path='calendar_lib.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -15,7 +15,7 @@
         {% for member in team.members %}
         <li class="user-preview-item">
           <span class=".user-preview-pic">
-            <img src="{{ url_for('static', path='img/user-16-2.svg') }}" alt="">
+            <img src="{{ dynamic_url_for(request, 'static', path='img/user-16-2.svg') }}" alt="">
           </span>
           <span class="user-preview-name">{{ member.username }}</span>
         </li>
@@ -30,7 +30,7 @@
     <section>
       <header class="management-header">
         <div class="logo-header org">
-          <img src="{{ url_for('static', path='img/org_logo.png') }}" alt="Organization Logo">
+          <img src="{{ dynamic_url_for(request, 'static', path='img/org_logo.png') }}" alt="Organization Logo">
         </div>
         <div>
           <h1>{{ organization_details.org_name }}</h1>
@@ -39,12 +39,12 @@
       </header>
       <div class="grid management-main-button-wrapper">
         <button class="management-main-button" onclick="location.href='/org/{{ organization_details.org_id }}/calendar'" type="button">
-          <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
+          <img src="{{ dynamic_url_for(request, 'static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
           <figcaption>Kalender</figcaption>
         </button>
 
         <button class="management-main-button" onclick="location.href='/org/{{ organization_details.org_id }}/team-creation'" type="button">
-          <img src="{{ url_for('static', path='img/plus-32-2.svg') }}" alt="team-logo"></img>
+          <img src="{{ dynamic_url_for(request, 'static', path='img/plus-32-2.svg') }}" alt="team-logo"></img>
           <figcaption>Team erstellen</figcaption>
         </button>
       </div>

@@ -2,10 +2,10 @@
 
 
 {% block head %}
-<script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/index.global.min.js') }}"></script>
-<script src="{{ url_for('static', path='fullcalendar-scheduler-6.1.7/dist/locales/de.js') }}"></script>
-<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
+<script src="{{ dynamic_url_for(request, 'static', path='fullcalendar-scheduler-6.1.7/dist/index.global.min.js') }}"></script>
+<script src="{{ dynamic_url_for(request, 'static', path='fullcalendar-scheduler-6.1.7/dist/locales/de.js') }}"></script>
+<script src="{{ dynamic_url_for(request, 'static', path='calendar_lib.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="{{ dynamic_url_for(request, 'static', path='styles.css') }}">
 {% endblock %}
 
 {% block body %}
@@ -13,7 +13,7 @@
   <div id="calendar"></div>
   <div class="calendar-footer">
     <a href="#" id="calendar-save-btn" class="icon-button" role="button"><img
-            src="{{ url_for('static', path='img/save-24-2.svg') }}" alt="">Speichern</a>
+            src="{{ dynamic_url_for(request, 'static', path='img/save-24-2.svg') }}" alt="">Speichern</a>
   </div>
 </main>
 
@@ -72,9 +72,9 @@
           resourceLabelContent: function(arg) {
               let iconUrl = '';
               if (arg.resource.id.startsWith('team')) {
-                  iconUrl = "{{ url_for('static', path='img/users-16-2.svg') }}";
+                  iconUrl = "{{ dynamic_url_for(request, 'static', path='img/users-16-2.svg') }}";
               } else {
-                  iconUrl = "{{ url_for('static', path='img/user-16-2.svg') }}";
+                  iconUrl = "{{ dynamic_url_for(request, 'static', path='img/user-16-2.svg') }}";
               }
               return { html: '<img src="'+iconUrl+'" style="margin-left: .25em; margin-right: .5em">' + arg.resource.title };
           },
@@ -115,9 +115,9 @@
               dlg.innerHTML = '<article> <header>' +
                 '<div class="dialog-header">' +
                   '<h3> Termin bearbeiten </h3>' +
-                  '<a href="#" id="delete-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/trash-2-24-2.svg") }} alt=""></a>' +
+                  '<a href="#" id="delete-dlg-btn" class="dlg-button outline" role="button"><img src= {{ dynamic_url_for(request, "static", path="img/trash-2-24-2.svg") }} alt=""></a>' +
                 '</div>' +
-                '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/x-24-2.svg") }} alt=""></a>' +
+                '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src= {{ dynamic_url_for(request, "static", path="img/x-24-2.svg") }} alt=""></a>' +
                 '</header> <form>' +
 
                 '<div class="grid">' +
@@ -151,7 +151,7 @@
                   '</div>' +
 
                 '</form> <footer>' +
-                '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/check-24-2.svg") }} alt=""></a>' +
+                '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ dynamic_url_for(request, "static", path="img/check-24-2.svg") }} alt=""></a>' +
                 '</footer> </article>';
               document.body.appendChild(dlg);
 
@@ -420,25 +420,25 @@
       className: EventPriority.Standard,
       text: 'Standard',
       click: () => { handleEventPriorityButtonClick(EventPriority.Standard); },
-      iconUrl: "{{ url_for('static', path='img/standard-24-2.svg') }}",
+      iconUrl: "{{ dynamic_url_for(request, 'static', path='img/standard-24-2.svg') }}",
     },
     {
       className: EventPriority.NoTime,
       text: 'Keine Zeit',
       click: () => { handleEventPriorityButtonClick(EventPriority.NoTime); },
-      iconUrl: "{{ url_for('static', path='img/notime-24-2.svg') }}",
+      iconUrl: "{{ dynamic_url_for(request, 'static', path='img/notime-24-2.svg') }}",
     },
     {
       className: EventPriority.Uncertain,
       text: 'Unsicher',
       click: () => { handleEventPriorityButtonClick(EventPriority.Uncertain); },
-      iconUrl: "{{ url_for('static', path='img/uncertain-24-2.svg') }}",
+      iconUrl: "{{ dynamic_url_for(request, 'static', path='img/uncertain-24-2.svg') }}",
     },
     {
       className: EventPriority.Certain,
       text: 'Sicher',
       click: () => { handleEventPriorityButtonClick(EventPriority.Certain); }, 
-      iconUrl: "{{ url_for('static', path='img/certain-24-2.svg') }}",
+      iconUrl: "{{ dynamic_url_for(request, 'static', path='img/certain-24-2.svg') }}",
     },
   ];
 

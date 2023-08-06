@@ -1,8 +1,8 @@
 {% extends "calendar_layout.html" %}
 
 {% block head %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', path='styles.css') }}">
-<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="{{ dynamic_url_for(request, 'static', path='styles.css') }}">
+<script src="{{ dynamic_url_for(request, 'static', path='calendar_lib.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -10,7 +10,7 @@
   <section>
     <header class="management-header">
       <div class="logo-header org">
-        <img src="{{ url_for('static', path='img/org_logo.png') }}" alt="Organization Logo">
+        <img src="{{ dynamic_url_for(request, 'static', path='img/org_logo.png') }}" alt="Organization Logo">
       </div>
       <div>
         <div id="team-header-wrapper">
@@ -21,12 +21,12 @@
     <div class="grid management-main-button-wrapper">
       <button class="management-main-button" onclick="location.href='/org/{{ org_id }}/calendar'"
               type="button">
-        <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
+        <img src="{{ dynamic_url_for(request, 'static', path='img/calendar-32-2.svg') }}" alt="calendar-logo"></img>
         <figcaption>Kalender</figcaption>
       </button>
 
       <button class="management-main-button" id="generate-invite-btn" type="button" disabled>
-        <img src="{{ url_for('static', path='img/user-plus-32-2.svg') }}" alt="team-logo"></img>
+        <img src="{{ dynamic_url_for(request, 'static', path='img/user-plus-32-2.svg') }}" alt="team-logo"></img>
         <figcaption>Spieler einladen</figcaption>
       </button>
     </div>
@@ -63,14 +63,14 @@
     if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
       teamHeaderWrapperEl.innerHTML += 
         '<a id="edit-team-anchor" data-tooltip="Team bearbeiten" data-placement="bottom" href="#">' +
-          '<img src="{{ url_for("static", path="img/edit-2-32-2.svg") }}" alt="">' +
+          '<img src="{{ dynamic_url_for(request, "static", path="img/edit-2-32-2.svg") }}" alt="">' +
         '</a>';
     }
 
     if (currentMemberRole === TeamRole.OWNER) {
       teamHeaderWrapperEl.innerHTML += 
       '<a id="delete-team-anchor" data-tooltip="Team löschen" data-placement="bottom" href="#">' +
-        '<img src="{{ url_for("static", path="img/trash-2-32-2.svg") }}" alt="">' +
+        '<img src="{{ dynamic_url_for(request, "static", path="img/trash-2-32-2.svg") }}" alt="">' +
       '</a>';
     }
 
@@ -79,7 +79,7 @@
       let newHTML = 
         '<article class="member-card" id="'+member.user_id+'">'+
           '<div class="member-card-image">'+
-            '<img src="{{ url_for("static", path="img/org_logo.png") }}" alt="">'+
+            '<img src="{{ dynamic_url_for(request, "static", path="img/org_logo.png") }}" alt="">'+
           '</div>'+
           '<article class="member-card-detail">'+
             '<h3>'+member.username+'</h3>'+
@@ -99,12 +99,12 @@
           if (memberRole === TeamRole.ADMIN) {
             newHTML += 
               '<a data-tooltip="Admin-Rolle entziehen" data-placement="bottom" onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
-                '<img src="{{ url_for("static", path="img/chevrons-down-16-2.svg") }}" alt="">'+
+                '<img src="{{ dynamic_url_for(request, "static", path="img/chevrons-down-16-2.svg") }}" alt="">'+
               '</a>';
           } else if (memberRole === TeamRole.STANDARD) {
             newHTML += 
               '<a data-tooltip="Admin-Rolle hinzufügen" data-placement="bottom" onClick="addAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
-                '<img src="{{ url_for("static", path="img/chevrons-up-16-2.svg") }}" alt="">'+
+                '<img src="{{ dynamic_url_for(request, "static", path="img/chevrons-up-16-2.svg") }}" alt="">'+
               '</a>';
           }
         }
@@ -114,7 +114,7 @@
         (member.user_id === '{{ user_id }}')) && (memberRole != TeamRole.OWNER)) {
           newHTML +=
           '<a data-tooltip="aus Team entfernen" data-placement="bottom" onClick="confirmRemoveTeamMember(event, \'' + member.username + '\', \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
-            '<img src="{{ url_for("static", path="img/user-minus-16-2.svg") }}" alt="">'+
+            '<img src="{{ dynamic_url_for(request, "static", path="img/user-minus-16-2.svg") }}" alt="">'+
           '</a>';
       };
 
@@ -136,14 +136,14 @@
           '<article> ' +
             '<header>' +
               '<h3> Team umbenennen </h3>' +
-              '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ url_for("static", path="img/x-24-2.svg") }}" alt=""></a>' +
+              '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ dynamic_url_for(request, "static", path="img/x-24-2.svg") }}" alt=""></a>' +
             '</header>' +
             '<div id="dlg-main">' +
               '<label for="edit-team-name-input">Neuen Namen eingeben:</label>' +
               '<input type="text" value="{{ team_details.team_name }}" id="edit-team-name-input">' +
             '</div>' +
             '<footer>' +
-              '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ url_for("static", path="img/save-24-2.svg") }} alt=""></a>' +
+              '<a href="#" id="check-dlg-btn" class="dlg-button outline" role="button"><img src= {{ dynamic_url_for(request, "static", path="img/save-24-2.svg") }} alt=""></a>' +
             '</footer>' +
           '</article>';
         dlg.setAttribute('open', '');
@@ -357,7 +357,7 @@
       '<article> ' +
         '<header>' +
           '<h3> Zum Team einladen </h3>' +
-          '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ url_for("static", path="img/x-24-2.svg") }}" alt=""></a>' +
+          '<a href="#" id="close-dlg-btn" class="dlg-button outline" role="button"><img src="{{ dynamic_url_for(request, "static", path="img/x-24-2.svg") }}" alt=""></a>' +
         '</header>' +
         '<div id="dlg-main" aria-busy="true">' +
         '</div>' +
@@ -378,7 +378,7 @@
               '<div class="copy-input">' +
                 '<input type="text" id="url-input" value="'+window.location.hostname+'/invite/'+data.invite_id+'" readonly>' +
                 '<button class="dlg-button" id="copy-url-btn">' +
-                  '<img src="{{ url_for("static", path="img/copy-24-2.svg") }}" alt=""></button>' +
+                  '<img src="{{ dynamic_url_for(request, "static", path="img/copy-24-2.svg") }}" alt=""></button>' +
               '</div>' +
               '<p class="dlg-disclaimer">Einmal-Link. 24h lang gültig.</p>' +
             '</div>';
