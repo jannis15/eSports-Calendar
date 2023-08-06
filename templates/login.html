@@ -1,15 +1,15 @@
 {% extends "base_layout.html" %}
 
 {% block head %}
-<script src="{{ url_for('static', path='jquery-3.7.0.min.js') }}"></script>
-<script src="{{ url_for('static', path='jquery_post_lib.js') }}"></script>
+<script src="{{ url_for('static', path='jquery-3.7.0.min.js', _external=True, _scheme='https') }}"></script>
+<script src="{{ url_for('static', path='jquery_post_lib.js', _external=True, _scheme='https') }}"></script>
 {% endblock %}
 
 {% block body %}
 <main class="container" id="mini">
     <article>
         <form class="mini-form" id="login-form" autocomplete="on">
-            <img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt="Calendar">
+            <img src="{{ url_for('static', path='img/calendar-32-2.svg', _external=True, _scheme='https') }}" alt="Calendar">
             <h1>Willkommen zurück</h1>
             <label for="username">Benutzername</label>
             <input type="text" id="username" autocomplete="on" required>

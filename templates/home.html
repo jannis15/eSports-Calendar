@@ -1,7 +1,7 @@
 {% extends "home_layout.html" %}
 
 {% block head %}
-<script src="{{ url_for('static', path='calendar_lib.js') }}"></script>
+<script src="{{ url_for('static', path='calendar_lib.js', _external=True, _scheme='https') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -10,10 +10,10 @@
   <section class="home-orgs">
     {% for organization in organizations %}
     <article class="organization-card" id="{{organization.org_id}}">
-      <a data-tooltip="Kalender" data-placement="bottom" id="calendar-anchor" href="/org/{{organization.org_id}}/calendar"><img src="{{ url_for('static', path='img/calendar-32-2.svg') }}" alt=""></a>
+      <a data-tooltip="Kalender" data-placement="bottom" id="calendar-anchor" href="/org/{{organization.org_id}}/calendar"><img src="{{ url_for('static', path='img/calendar-32-2.svg', _external=True, _scheme='https') }}" alt=""></a>
       <a class="organization-card-anchor" href="/org/{{organization.org_id}}">
         <figure class="organization-card-logo">
-          <img src="{{ url_for('static', path='img/org_logo.png') }}" alt="Organization Logo">
+          <img src="{{ url_for('static', path='img/org_logo.png', _external=True, _scheme='https') }}" alt="Organization Logo">
         </figure>
         <footer>
           <h3>{{ organization.org_name }}</h3>
@@ -23,7 +23,7 @@
     {% endfor %}
     <article class="organization-card add-organization">
       <a id="add-organization-card" class="organization-card-anchor" href="#">
-        <img src="{{ url_for('static', path='img/plus-circle-64-2.svg') }}" alt="">
+        <img src="{{ url_for('static', path='img/plus-circle-64-2.svg', _external=True, _scheme='https') }}" alt="">
         <h3>Organisation hinzufügen</h3>
       </a>
     </article>
