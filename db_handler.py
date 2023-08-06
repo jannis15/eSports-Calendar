@@ -755,8 +755,7 @@ class DBHandler:
             if is_valid_invite:
                 is_member_of_org = self.is_user_member_of_org(db, session_user_id, db_invite.team.org.id)
                 if not is_member_of_org:
-                    raise HTTPException(status_code=403, detail='You are not a member of the org. You first have to '
-                                                                'request access to the organization itself')
+                    self.add_user_to_organization(db, session_user_id,  db_invite.team.org.id)
 
                 if self.is_user_member_of_team(db, session_user_id, db_invite.team.id):
                     raise HTTPException(status_code=409, detail='You are already a member of the team. The invite '

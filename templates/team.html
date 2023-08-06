@@ -376,7 +376,7 @@
             mainContent.innerHTML =           
             '<div class="copy-container">' +
               '<div class="copy-input">' +
-                '<input type="text" id="url-input" value="'+window.location.hostname+'/invite/'+data.invite_id+'" readonly>' +
+                '<input type="text" id="url-input" value="'+window.location.protocol+'//'+window.location.hostname+'/invite/'+data.invite_id+'" readonly>' +
                 '<button class="dlg-button" id="copy-url-btn">' +
                   '<img src="{{ dynamic_url_for(request, "static", path="img/copy-24-2.svg") }}" alt=""></button>' +
               '</div>' +

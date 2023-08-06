@@ -23,8 +23,6 @@ templates = Jinja2Templates(directory="templates")
 
 def dynamic_url_for(request: Request, name: str, **path_params: Any) -> str:
     http_url = str(request.url_for(name, **path_params))
-    # is_secure = request.scope.get("scheme") == "https"
-    # if is_secure:
     http_url = http_url.replace("http", "https", 1)
 
     return http_url
