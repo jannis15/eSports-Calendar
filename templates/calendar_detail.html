@@ -27,7 +27,6 @@
           resourceAreaWidth: '9em',
           resourceOrder: 'title,id',
           allDayMaintainDuration: true,
-          initialView: 'resourceTimelineDay',
           scrollTime: new Date().getHours() + ':' + (new Date().getMinutes() < 10 ? '0' : '') + new Date().getMinutes(),
           slotMinWidth: 30,
           nowIndicator: true,
@@ -54,6 +53,10 @@
               left: 'prev,next today',
               center: 'title',
               end: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
+          },
+          initialView: 'resourceTimelineWeek',
+          viewDidMount: function(view) {
+            updateSlotDuration();
           },
           navLinks: false, // can click day/week names to navigate views
           editable: true,
@@ -419,6 +422,24 @@
         });
 
         calendar.render();
+
+        function updateSlotDuration() {
+          let slotDuration = '01:00:00';
+          if (calendar.view.type === 'resourceTimelineWeek') {
+            slotDuration = '12:00:00';
+          } else if (calendar.view.type === 'resourceTimelineMonth') {
+            slotDuration = '';
+          }
+
+          calendar.setOption('slotDuration', slotDuration);
+        }
+
+        const viewButtons = document.querySelectorAll('.fc-button-group button');
+        viewButtons.forEach(function (button) {
+          button.addEventListener('click', function () {
+            setTimeout(updateSlotDuration, 150);
+          });
+        });
     });
 
   // declarations

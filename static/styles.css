@@ -90,6 +90,10 @@ input:focus, select:focus, textarea:focus {
 
 /* FullCalendar */
 
+.fc .fc-timeline-slot-minor {
+  border-style: none !important;
+}
+
 .allowed-resource {
   background-color: rgba(255, 255, 255, 0.05);
 }
