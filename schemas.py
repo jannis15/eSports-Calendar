@@ -55,6 +55,7 @@ class OrganizationDetailsSchema(OrganizationSchema):
     owner_id: str
     owner_name: str
     owner_datetime: datetime
+    member_count: int
     teams: List[TeamSchema]
 
 

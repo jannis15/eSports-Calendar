@@ -648,6 +648,7 @@ class DBHandler:
             org_name=db_org.name,
             owner_id=db_org.owner_id,
             owner_name=self.get_username_by_id(db_org.owner_id, db),
+            member_count=len(db_org.users),
             owner_datetime=db_org.owner_datetime,
             teams=teams,
         )

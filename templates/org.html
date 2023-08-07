@@ -7,6 +7,9 @@
 
 {% block body %}
   <aside id="teams-side-view">
+    <section>
+      <b>Mitglieder: {{ organization_details.member_count }}</b>
+    </section>
     {% for team in organization_details.teams %}
     {% if not (team.team_id == "-1" and team.members|length == 0) %}
     <section>
