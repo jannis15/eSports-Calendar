@@ -92,12 +92,12 @@
 
                 let eventData = {
                   id: '',
-                  title: 'Termin',
+                  title: getNameForPriority(currentEventPriority),
                   start: info.startStr,
                   end: info.endStr,
                   resourceIds: resourceIds,
                   editable: true,
-                  extendedProps: {priority: currentEventPriority, memo: ''},
+                  extendedProps: {priority: currentEventPriority, memo: '', customTitle: ''},
                   color: currentEventPriorityColor,
                   textColor: getContrastColor(currentEventPriorityColor),
                 };
@@ -123,7 +123,7 @@
                 '<div class="grid">' +
                   '<div>' +
                     '<label for="dlg-title">Titel</label>' +
-                    '<input type="text" id="dlg-title" placeholder="Termin" value="'+info.event.title+'" required>' +
+                    '<input type="text" id="dlg-title" placeholder="Termin" value="'+info.event.extendedProps.customTitle+'" required>' +
                     '<label for="dlg-select-priority">Priorität</label>' +
                     '<select id="dlg-select-priority">' +
                       '<option value="'+EventPriority.Standard+'">Standard</option>' +
@@ -194,7 +194,8 @@
                   const selectPriority = document.getElementById("dlg-select-priority");
                   const eventPriorityColor = GetEventPriorityColor(selectPriority.value);
 
-                  info.event.setProp('title', title.value);
+                  info.event.setProp('title', title.value.length===0? getNameForPriority(selectPriority.value): title.value);
+                  info.event.setExtendedProp('customTitle', title.value);
                   info.event.setExtendedProp('memo', memo.value);
                   info.event.setExtendedProp('priority', selectPriority.value);
                   info.event.setProp('backgroundColor',eventPriorityColor);
@@ -266,14 +267,14 @@
                 id: '{{ event.id }}',
                 resourceId: 'team{{ team.team_id }}',
                 editable: {{ team.is_editable | lower }},
-                title: '{{ event.title }}',
+                title: '{{ event.title }}'.length === 0? getNameForPriority('{{ event.event_priority }}'): '{{ event.title }}',
                 start: backendDateTime('{{ event.start_point }}+0'),
                 end: backendDateTime('{{ event.end_point }}+0'),
                 resizable: true,
                 backgroundColor: eventPriorityColor,
                 borderColor: eventPriorityColor,
                 textColor: getContrastColor(eventPriorityColor),
-                extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
+                extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}', customTitle: '{{ event.title }}'},
               });
             {% endfor %}
   
@@ -302,14 +303,14 @@
                     id: '{{ event.id }}',
                     resourceId: 'member{{ member.user_id }}team{{ team.team_id }}',
                     editable: '{{ user_id }}' === '{{ member.user_id }}',
-                    title: '{{ event.title }}',
+                    title: '{{ event.title }}'.length === 0? getNameForPriority('{{ event.event_priority }}'): '{{ event.title }}',
                     start: backendDateTime('{{ event.start_point }}+0'),
                     end: backendDateTime('{{ event.end_point }}+0'),
                     resizable: true,
                     backgroundColor: eventPriorityColor,
                     borderColor: eventPriorityColor,
                     textColor: getContrastColor(eventPriorityColor),
-                    extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}'},
+                    extendedProps: {priority: '{{ event.event_priority }}', memo: '{{ event.memo }}', customTitle: '{{ event.title }}'},
                   });
                   {% set _ = addedMemberResources.update({member.user_id: 'member' + member.user_id + 'team' + team.team_id}) %}
                 {% endfor %}
@@ -329,7 +330,7 @@
             events.map((event) => {
               jsonEvents.push({
                 id: event.id,
-                title: event.title,
+                title: event.extendedProps.customTitle,
                 memo: event.extendedProps.memo,
                 start_point: event.start,
                 end_point: event.end,

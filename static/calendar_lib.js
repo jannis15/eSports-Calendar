@@ -20,6 +20,21 @@ function GetEventPriorityColor(eventPriority) {
     }
 };
 
+function getNameForPriority(eventPriority) {
+  switch (eventPriority) {
+    case EventPriority.Standard:
+      return 'Termin';
+    case EventPriority.NoTime:
+      return 'Keine Zeit';
+    case EventPriority.Uncertain:
+      return 'Unsicher';
+    case EventPriority.Certain:
+      return 'Sicher';
+    default:
+      return 'Unbekannt';
+  }
+}
+
 function StartLoading(el) {
   el.setAttribute("aria-busy", "true");
 };
