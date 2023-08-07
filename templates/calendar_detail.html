@@ -31,6 +31,12 @@
           slotMinWidth: 30,
           nowIndicator: true,
           contentHeight: "auto",
+          eventDidMount: (info) => {
+            if (info.event.extendedProps.memo.length !== 0) {
+              info.el.innerHTML = '<div style="min-width:12px;" data-tooltip="'+info.event.extendedProps.memo+'" data-placement="bottom">'+
+                '<img src= {{ dynamic_url_for(request, "static", path="img/info-12-2.svg") }} alt=""></div>';
+            } 
+          },
           eventDrop: (info) =>  {
             const newResource = info.newResource;
             if (newResource != null) { // check if resource changed
