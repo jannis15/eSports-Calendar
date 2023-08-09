@@ -388,6 +388,10 @@ article.add-organization > .organization-card-anchor {
   gap: 1rem;
 }
 
+#add-organization-card > p {
+  margin: 0;
+}
+
 article.organization-card:hover {
   border: 2px solid #e8e9e9;
 }
