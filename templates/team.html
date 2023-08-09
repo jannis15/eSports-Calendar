@@ -62,14 +62,14 @@
 
     if (currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) {
       teamHeaderWrapperEl.innerHTML += 
-        '<a id="edit-team-anchor" data-tooltip="Team bearbeiten" data-placement="bottom" href="#">' +
+        '<a class="team-action-image" id="edit-team-anchor" href="#">' +
           '<img src="{{ dynamic_url_for(request, "static", path="img/edit-2-32-2.svg") }}" alt="">' +
         '</a>';
     }
 
     if (currentMemberRole === TeamRole.OWNER) {
       teamHeaderWrapperEl.innerHTML += 
-      '<a id="delete-team-anchor" data-tooltip="Team löschen" data-placement="bottom" href="#">' +
+      '<a class="team-action-image" id="delete-team-anchor" href="#">' +
         '<img src="{{ dynamic_url_for(request, "static", path="img/trash-2-32-2.svg") }}" alt="">' +
       '</a>';
     }
@@ -98,12 +98,12 @@
         if (currentUserId != member.user_id) {
           if (memberRole === TeamRole.ADMIN) {
             newHTML += 
-              '<a data-tooltip="Admin-Rolle entziehen" data-placement="bottom" onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+              '<a onClick="removeAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
                 '<img src="{{ dynamic_url_for(request, "static", path="img/chevrons-down-16-2.svg") }}" alt="">'+
               '</a>';
           } else if (memberRole === TeamRole.STANDARD) {
             newHTML += 
-              '<a data-tooltip="Admin-Rolle hinzufügen" data-placement="bottom" onClick="addAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+              '<a  onClick="addAdmin(event, \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
                 '<img src="{{ dynamic_url_for(request, "static", path="img/chevrons-up-16-2.svg") }}" alt="">'+
               '</a>';
           }
@@ -113,7 +113,7 @@
       if (((currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER) ||
         (member.user_id === '{{ user_id }}')) && (memberRole != TeamRole.OWNER)) {
           newHTML +=
-          '<a data-tooltip="aus Team entfernen" data-placement="bottom" onClick="confirmRemoveTeamMember(event, \'' + member.username + '\', \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
+          '<a  onClick="confirmRemoveTeamMember(event, \'' + member.username + '\', \'' + member.user_id + '\')" class="change-member-role-icon" href="#">'+
             '<img src="{{ dynamic_url_for(request, "static", path="img/user-minus-16-2.svg") }}" alt="">'+
           '</a>';
       };

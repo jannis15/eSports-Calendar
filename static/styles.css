@@ -48,6 +48,7 @@ a, button {
 }
 
 h1,h2,h3,h4,h5,h6 {
+  word-break: break-all;
   margin: 0;
 }
 
@@ -89,6 +90,11 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* FullCalendar */
+
+.fc-event {
+  min-height: 2.5em;
+  word-break: break-all !important;
+}
 
 .fc .fc-timeline-slot-minor {
   border-style: none !important;
@@ -463,7 +469,7 @@ aside ul li {
   justify-content: center;
 }
 
-.management-main.team {
+ement-main.team {
   margin-left: unset;
 }
 
@@ -583,6 +589,10 @@ aside ul li {
 
 /* Team-Page */
 
+#team-header-wrapper .team-action-image {
+  flex-shrink: 0;
+}
+
 #team-header-wrapper {
   display: flex;
   align-items: center;
@@ -625,25 +635,26 @@ aside ul li {
 
 .member-card-detail {
   display: flex;
+  gap: .25em;
   flex-direction: column;
   justify-content: center;
   margin: unset;
   margin-left: 4.5em;
-  padding: 0;
+  padding: 1em;
   padding-left: 4.5em;
   padding-right: 0em;
-  height: 6em;
   border-radius: .5em;
 }
 
 .member-roles {
   display: inline-flex;
-  align-items: center;
   gap: .25em;
+  flex-wrap: wrap;
+  overflow: auto;
 }
 
 .member-role {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: .25em;
@@ -666,8 +677,6 @@ aside ul li {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: .1em;
-  margin: .1em;
   height: 2em;
   width: 2em;
 }

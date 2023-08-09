@@ -33,8 +33,8 @@
           contentHeight: "auto",
           eventDidMount: (info) => {
             if (info.event.extendedProps.memo.length !== 0) {
-              info.el.innerHTML = '<div style="min-width:12px;" data-tooltip="'+info.event.extendedProps.memo+'" data-placement="bottom">'+
-                '<img src= {{ dynamic_url_for(request, "static", path="img/info-12-2.svg") }} alt=""></div>';
+              info.el.innerHTML = '<div style="min-width:12px;" data-tooltip="'+info.event.extendedProps.memo+'" data-placement="top">'+
+                '<img src= {{ dynamic_url_for(request, "static", path="img/info-16-2.svg") }} alt=""></div>';
             } 
           },
           eventDrop: (info) =>  {
@@ -58,7 +58,7 @@
           headerToolbar: {
               left: 'prev,next today',
               center: 'title',
-              end: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth',
+              end: 'resourceTimelineDay,resourceTimelineWeek',
           },
           initialView: 'resourceTimelineWeek',
           viewDidMount: function(view) {
