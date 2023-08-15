@@ -55,7 +55,8 @@
     <h2>Teams</h2>
     {% for team in organization_details.teams %}
     {% if team.team_id != "-1" %}
-      <article class="team-card" id="{{team.team_id}}">
+    <article class="team-card" id="{{ team.team_id }}">
+      <div class="bg" style="background-image: url('{{ dynamic_url_for(request, 'static', path='img/default-banner.png') }}');"></div>
         <h3>{{ team.team_name }}</h3>
         <a href="/org/{{ organization_details.org_id }}/team/{{team.team_id}}">Ansehen</a>
       </article>
