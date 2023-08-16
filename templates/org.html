@@ -58,7 +58,7 @@
     <article class="team-card" id="{{ team.team_id }}">
       <div class="bg" style="background-image: url('{{ dynamic_url_for(request, 'static', path='img/default-banner.png') }}');"></div>
         <h3>{{ team.team_name }}</h3>
-        <a href="/org/{{ organization_details.org_id }}/team/{{team.team_id}}">Ansehen</a>
+        <a class="link-text" href="/org/{{ organization_details.org_id }}/team/{{team.team_id}}">Ansehen</a>
       </article>
     {% endif %}
   {% endfor %}
@@ -66,6 +66,18 @@
   </main>
 
   <script>
+    function checkScreenWidth() {
+      const screenWidth = window.innerWidth;
+      const teamsSideViewEl = document.getElementById("teams-side-view");
+
+      if (screenWidth <= 576 && !teamsSideViewEl.classList.contains("close")) {
+        teamsSideViewEl.classList.add("close");
+      } else if (screenWidth > 576 && teamsSideViewEl.classList.contains("close")) {
+        teamsSideViewEl.classList.remove("close");
+      }
+    }
+    checkScreenWidth();
+
     createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.owner_datetime }}");
     const createDatetimeElement = document.getElementById("create-info");
     createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
