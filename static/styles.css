@@ -464,6 +464,10 @@ article.organization-card:hover {
 
 /* Management */
 
+#guide-icon-anchor > img {
+  min-width: 24px;
+}
+
 .close {
   transform: translateX(-100%);
 }

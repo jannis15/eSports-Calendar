@@ -66,37 +66,44 @@
   </main>
 
   <script>
-    function checkScreenWidth() {
+    function checkInitialSideview() {
       const screenWidth = window.innerWidth;
       const teamsSideViewEl = document.getElementById("teams-side-view");
+      const orgMainEl = document.getElementById("org-main");
 
       if (screenWidth <= 576 && !teamsSideViewEl.classList.contains("close")) {
         teamsSideViewEl.classList.add("close");
-      } else if (screenWidth > 576 && teamsSideViewEl.classList.contains("close")) {
+      } else if (screenWidth > 576) {
         teamsSideViewEl.classList.remove("close");
-      }
-    }
-    checkScreenWidth();
-
-    createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.owner_datetime }}");
-    const createDatetimeElement = document.getElementById("create-info");
-    createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
-
-    const orgMainEl = document.getElementById("org-main");
-    orgMainEl.classList.add("with-margin");
-    const leftSideNavEl = document.getElementById("left-side-nav");
-    leftSideNavEl.innerHTML = '<li><a id="guide-icon-anchor" href=""><img src="{{ dynamic_url_for(request, "static", path="img/menu-24-2.svg") }}" alt=""></a></li>' + leftSideNavEl.innerHTML;
-    const guideIconEl = document.getElementById("guide-icon-anchor");
-    guideIconEl.addEventListener("click", (event) => { 
-      event.preventDefault();
-      const teamsSideViewEl = document.getElementById("teams-side-view"); 
-      teamsSideViewEl.classList.toggle("close");
-      if (teamsSideViewEl.classList.contains("close")) {
-        orgMainEl.classList.remove("with-margin");
-      } else {
         orgMainEl.classList.add("with-margin");
       }
-    });
+    }
+    checkInitialSideview();
+
+    function addFormattedDateTimeStr() {
+      createDateTimeStr = formatDateDDMMYYYY("{{ organization_details.owner_datetime }}");
+      const createDatetimeElement = document.getElementById("create-info");
+      createDatetimeElement.innerHTML += ' · <span class="normal-text">' + createDateTimeStr + '</span>';
+    }
+    addFormattedDateTimeStr();
+
+    function addMenuGuideIconButton() {
+      const orgMainEl = document.getElementById("org-main");
+      const leftSideNavEl = document.getElementById("left-side-nav");
+      leftSideNavEl.innerHTML = '<li><a id="guide-icon-anchor" href=""><img src="{{ dynamic_url_for(request, "static", path="img/menu-24-2.svg") }}" alt=""></a></li>' + leftSideNavEl.innerHTML;
+      const guideIconEl = document.getElementById("guide-icon-anchor");
+      guideIconEl.addEventListener("click", (event) => { 
+        event.preventDefault();
+        const teamsSideViewEl = document.getElementById("teams-side-view"); 
+        teamsSideViewEl.classList.toggle("close");
+        if (teamsSideViewEl.classList.contains("close")) {
+          orgMainEl.classList.remove("with-margin");
+        } else {
+          orgMainEl.classList.add("with-margin");
+        }
+      });
+    };
+    addMenuGuideIconButton();
   </script>
 
 {% endblock %}
