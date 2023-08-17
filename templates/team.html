@@ -14,6 +14,7 @@
       </div>
       <div>
         <div id="team-header-wrapper">
+          <h1>{{ team_details.team_name }}</h1>
         </div>
         <h5 id="create-info">{{ team_details.owner_name }}</h5>
       </div>
@@ -53,6 +54,7 @@
     teamMembers.members.sort((a, b) => a.username.localeCompare(b.username));
     const currentMemberRole = determineRole(findMemberByUserId(teamMembers.members, currentUserId), teamMembers.owner_id);
     memberCardsEl.innerHTML = '';
+    membersHeaderEl.innerHTML = 'Mitglieder ('+ teamMembers.members.length +')';
 
     currentMemberRole === TeamRole.ADMIN || currentMemberRole === TeamRole.OWNER
       ? generateInviteBtnEl.removeAttribute('disabled')

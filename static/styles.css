@@ -622,6 +622,7 @@ aside ul li {
 }
 
 .team-card {
+  border-radius: .5em;
   position: relative;
   overflow: hidden;
 }
@@ -630,6 +631,14 @@ aside ul li {
 .team-card h3 {
   position: relative;
   z-index: 3;
+}
+
+.team-card h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
 
 .team-card::before {

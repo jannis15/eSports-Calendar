@@ -52,7 +52,7 @@
         </button>
       </div>
   
-    <h2>Teams</h2>
+    <h2>Teams ({{ organization_details.teams|length-1 }})</h2>
     {% for team in organization_details.teams %}
     {% if team.team_id != "-1" %}
     <article class="team-card" id="{{ team.team_id }}">
