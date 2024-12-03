@@ -1,3 +1,5 @@
+<br id="read-me"/>
+
 ![logo](https://github.com/jannis15/eSports-Calendar/assets/78983365/bc11637b-f357-497c-baa2-407821411c35)
 
 Der eSports-Kalender ist ein Hobby-Projekt zur Verwaltung von Terminen eines Sportvereins. Die Grundidee besteht darin, dass Spieler ihre verfügbaren Zeitfenster in einem Kalender eintragen können, sodass die Team-Kapitäne einen besseren Überblick darüber erhalten, wann sie am besten Termine für Ligaspiele und andere Veranstaltungen planen können. 
